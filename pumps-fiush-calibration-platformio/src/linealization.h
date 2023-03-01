@@ -9,7 +9,7 @@ struct Coefficients {
   float ka = 1;
   float kb = 0;
 };
-struct Coefficients GetCoefficients(const float data_x[], int length);
+struct Coefficients GetCoefficients(const float data_x[], const float data_y[], int length);
 
 } // namespace linealization
 } // namespace _10klab

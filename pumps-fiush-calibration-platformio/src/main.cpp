@@ -13,9 +13,11 @@ void setup(){
 
 _10klab::linealization::Coefficients GetCoefficients;
 
-float data[] = {5,4,3,2,1};
+float data_x[3] = {1, 2, 3};
+float data_y[3] = {3, 5, 6.5};
+const int data_length = sizeof(data_x) / sizeof(float);
 
-GetCoefficients = _10klab::linealization::GetCoefficients(data, 5);
+GetCoefficients = _10klab::linealization::GetCoefficients(data_x, data_y, data_length);
 
 float ka=GetCoefficients.ka;
 float kb=GetCoefficients.kb;
@@ -35,18 +37,18 @@ delay(100);
 
 
 
-// struct Coefficients {
-//   float ka = 1;
-//   float kb = 0;
-// };
+struct Coefficients {
+  float ka = 1;
+  float kb = 0;
+};
 
-// struct Coefficients LinearCoefficients;
+struct Coefficients LinearCoefficients;
 
-// struct Coefficients UpdateCoefficients(){
-//   LinearCoefficients.ka = 2;
-//   LinearCoefficients.kb = 3;
-//   return LinearCoefficients;
-// }
+struct Coefficients UpdateCoefficients(){
+  LinearCoefficients.ka = 2;
+  LinearCoefficients.kb = 3;
+  return LinearCoefficients;
+}
 
 // int CalculateN();
 // float CalculateA(int length);
