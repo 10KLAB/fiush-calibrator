@@ -1,3 +1,5 @@
+#include "linealization.h"
+
 #include <Arduino.h>
 
 namespace _10klab {
@@ -12,12 +14,6 @@ float CalculateE(const float data_y[], const int length);
 float CalculateF(const float data_x[], const int length, const float m);
 float CalculateI(const int length, const float e, const float f);
 
-struct Coefficients {
-  float ka = 1;
-  float kb = 0;
-};
-struct Coefficients LinearCoefficients;
-
 struct Coefficients GetCoefficients(const float data_x[], const float data_y[],
                                     const int length) {
   const int n = length;
@@ -31,9 +27,6 @@ struct Coefficients GetCoefficients(const float data_x[], const float data_y[],
   const float i = CalculateI(length, e, f);
 
   // y = m*x + i
-  LinearCoefficients.ka = m;
-  LinearCoefficients.kb = i;
-
   // Serial.println("n= " + String(n));
   // Serial.println("a= " + String(a));
   // Serial.println("b= " + String(b));
@@ -44,7 +37,7 @@ struct Coefficients GetCoefficients(const float data_x[], const float data_y[],
   // Serial.println("f= " + String(f));
   // Serial.println("i= " + String(i));
 
-  return LinearCoefficients;
+  return {.ka = m, .kb = i};
 }
 
 float CalculateI(const int length, const float e, const float f) {
@@ -117,5 +110,5 @@ float CalculateA(const float data_x[], const float data_y[], const int length) {
   return (a);
 }
 
-} // namespace linealization
-} // namespace _10klab
+}  // namespace linealization
+}  // namespace _10klab

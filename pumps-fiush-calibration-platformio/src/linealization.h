@@ -6,12 +6,13 @@ namespace _10klab {
 namespace linealization {
 
 struct Coefficients {
-  float ka = 1;
-  float kb = 0;
+  float ka;
+  float kb;
 };
-struct Coefficients GetCoefficients(const float data_x[], const float data_y[], int length);
+struct Coefficients GetCoefficients(const float data_x[], const float data_y[],
+                                    int length);
 
-} // namespace linealization
-} // namespace _10klab
+}  // namespace linealization
+}  // namespace _10klab
 
 #endif
