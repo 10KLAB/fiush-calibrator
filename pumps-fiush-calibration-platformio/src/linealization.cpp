@@ -40,6 +40,7 @@ struct Coefficients GetCoefficients(const float data_x[], const float data_y[],
   return {.ka = m, .kb = i};
 }
 
+
 float CalculateI(const int length, const float e, const float f) {
   return (e - f) / length;
 }
