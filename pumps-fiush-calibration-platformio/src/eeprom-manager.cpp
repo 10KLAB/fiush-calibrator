@@ -44,10 +44,10 @@ void SaveCoefficients(float ka, float kb) {
   const int float_to_integer_factor = 100;
 
   int integer_ka = ka;
-  int fractional_ka = ((ka + 0.005) - integer_ka) * float_to_integer_factor;
+  int fractional_ka = ((ka + 0.01) - integer_ka) * float_to_integer_factor;
 
   int integer_kb = kb;
-  int fractional_kb = ((kb + 0.005) - integer_kb) * float_to_integer_factor;
+  int fractional_kb = ((kb + 0.01) - integer_kb) * float_to_integer_factor;
 
   Serial.println("integer ka= " + String(integer_ka) +
                  " fraction ka: " + String(fractional_ka));

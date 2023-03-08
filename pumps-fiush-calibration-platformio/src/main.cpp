@@ -3,6 +3,10 @@
 #include "scale.h"
 #include "eeprom-manager.h"
 #include "linealization.h"
+#include "connection_manager.h"
+#include "TCP_client.h"
+#include "UDP_client.h"
+
 
 #include <EEPROM.h>
 
@@ -12,7 +16,7 @@
 Pushbutton button_one(BUTTON_ONE);
 Pushbutton button_two(BUTTON_TWO);
 
-
+String host_ip = "";
 
 void CalibrationMode();
 void ManualMode();
@@ -20,11 +24,14 @@ void SelectionMenu();
 
 void setup() {
   Serial.begin(115200);
-  _10klab::eeprom::SetupEEPROM();
-  delay(100);
+  // _10klab::eeprom::SetupEEPROM();
+  // delay(100);
   // _10klab::eeprom::SaveCoefficients(0.84, 0.24);
-  _10klab::scale::SetUpScale();
+  // _10klab::scale::SetUpScale();
+_10klab::connection_manager::ConenctWifi();
 
+
+Serial.println("holi");
 
   // EEPROM.write(0, 5);
   // int a = EEPROM.read(0);
@@ -34,7 +41,9 @@ void setup() {
 }
 
 void loop() {
-  delay(2000);
+  // delay(2000);
+  
+  delay(1000);
 }
 
 void SelectionMenu() {
@@ -48,6 +57,7 @@ void SelectionMenu() {
       Serial.println("Page: " + String(page));
       if(page > 2){
         page=0;
+      Serial.println("Page: " + String(page));
       }
     }
     if (button_two.getSingleDebouncedPress()) {
@@ -59,6 +69,8 @@ void SelectionMenu() {
       switch (page) {
       case 0:
         Serial.println("Pump linealization Mode");
+        _10klab::udp_client::UDPInitializer();
+        _10klab::tcp_client::SendAnswer(_10klab::udp_client::InitialConnection());
         break;
 
       case 1:
