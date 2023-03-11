@@ -1,6 +1,7 @@
 #include "ArduinoJson.h"
 #include <Arduino.h>
 #include <WiFiUdp.h>
+#include "connection_manager.h"
 
 const int udpPort = 8000;
 
@@ -32,12 +33,14 @@ String InitialConnection() {
       Serial.println(input_message);
       // Enviar una respuesta al cliente
 
-      udp.beginPacket(udp.remoteIP(), udp.remotePort());
-      udp.print("Mensaje recibido correctamente");
-      udp.endPacket();
+      // udp.print("Mensaje recibido correctamente");
+      // udp.print(_10klab::connection_manager::myIp());
 
       if(input_message == "hi there"){
+        udp.beginPacket(udp.remoteIP(), udp.remotePort());
         host_ip = udp.remoteIP().toString().c_str();
+        udp.print("hi sup");
+        udp.endPacket();
         Serial.println(host_ip);
         Serial.println("bye");
         connection = true;

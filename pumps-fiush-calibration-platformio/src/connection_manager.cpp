@@ -38,6 +38,15 @@ void ConenctWifi() {
     connection_message_flag = true;
   }
 }
+String myIp(){
+  String ip = WiFi.localIP().toString();
+  return ip;
+}
+void EraseCredentials(){
+  wifiManager.resetSettings();
+  delay(300);
+  ESP.restart();
+}
 
 } // namespace connection_manager
 } // namespace _10klab

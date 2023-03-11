@@ -4,8 +4,9 @@
 
 namespace _10klab {
 namespace connection_manager {
-void wifiPinDefinition();
+void EraseCredentials();
 void ConenctWifi();
+String myIp();
 } // namespace connection_manager
 } // namespace _10klab
 

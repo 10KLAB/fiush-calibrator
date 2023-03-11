@@ -1,14 +1,11 @@
-#include <Arduino.h>
 #include "Pushbutton.h"
-#include "scale.h"
-#include "eeprom-manager.h"
-#include "linealization.h"
-#include "connection_manager.h"
 #include "TCP_client.h"
 #include "UDP_client.h"
-
-
-#include <EEPROM.h>
+#include "connection_manager.h"
+#include "eeprom-manager.h"
+#include "linealization.h"
+#include "scale.h"
+#include <Arduino.h>
 
 #define BUTTON_ONE 16
 #define BUTTON_TWO 4
@@ -20,6 +17,7 @@ String host_ip = "";
 
 void CalibrationMode();
 void ManualMode();
+void PumpsCaracterizationMode();
 void SelectionMenu();
 
 void setup() {
@@ -28,10 +26,9 @@ void setup() {
   // delay(100);
   // _10klab::eeprom::SaveCoefficients(0.84, 0.24);
   // _10klab::scale::SetUpScale();
-_10klab::connection_manager::ConenctWifi();
+  _10klab::connection_manager::ConenctWifi();
 
-
-Serial.println("holi");
+  Serial.println("holi");
 
   // EEPROM.write(0, 5);
   // int a = EEPROM.read(0);
@@ -42,7 +39,7 @@ Serial.println("holi");
 
 void loop() {
   // delay(2000);
-  
+
   delay(1000);
 }
 
@@ -55,9 +52,9 @@ void SelectionMenu() {
     if (button_one.getSingleDebouncedPress()) {
       page++;
       Serial.println("Page: " + String(page));
-      if(page > 2){
-        page=0;
-      Serial.println("Page: " + String(page));
+      if (page > 3) {
+        page = 0;
+        Serial.println("Page: " + String(page));
       }
     }
     if (button_two.getSingleDebouncedPress()) {
@@ -68,9 +65,8 @@ void SelectionMenu() {
     if (selected) {
       switch (page) {
       case 0:
-        Serial.println("Pump linealization Mode");
-        _10klab::udp_client::UDPInitializer();
-        _10klab::tcp_client::SendAnswer(_10klab::udp_client::InitialConnection());
+        Serial.println("Pump caracterization Mode");
+          PumpsCaracterizationMode();
         break;
 
       case 1:
@@ -82,6 +78,10 @@ void SelectionMenu() {
         Serial.println("Calibration Mode");
         CalibrationMode();
         break;
+
+      case 3:
+        Serial.println("borrando credenciales");
+        _10klab::connection_manager::EraseCredentials();
 
       default:
         Serial.println("out of range");
@@ -133,10 +133,10 @@ void CalibrationMode() {
       Serial.println("poner peso #: " + String(step_counter));
     }
 
-      if(button_two.getSingleDebouncedPress()){
-        Serial.println("exit");
-        return;
-      }
+    if (button_two.getSingleDebouncedPress()) {
+      Serial.println("exit");
+      return;
+    }
   }
   GetCoefficients =
       _10klab::linealization::GetCoefficients(data_x, data_y, data_length);
@@ -152,22 +152,41 @@ void CalibrationMode() {
   Serial.println("terminado");
 }
 
-void ManualMode(){
+void ManualMode() {
   _10klab::scale::Tare();
   unsigned long current_time = 0;
   const int refresh_time = 500;
-  while(!button_two.getSingleDebouncedPress() && !button_two.getSingleDebouncedRelease()){
+  while (!button_two.getSingleDebouncedPress() &&
+         !button_two.getSingleDebouncedRelease()) {
 
-    if(millis() >= current_time + refresh_time){
+    if (millis() >= current_time + refresh_time) {
       float value = _10klab::scale::GetUnits(10);
       Serial.print("peso= " + String(value));
       current_time = millis();
     }
   }
   Serial.println("exit");
-
 }
 
+void PumpsCaracterizationMode() {
+  _10klab::tcp_client::PumpParameters IncomingParameters;
+  const int error_data = 99;
 
+  IncomingParameters.pumpId = error_data;
+  IncomingParameters.processFinished = false;
+  _10klab::udp_client::UDPInitializer();
+  String server_ip = _10klab::udp_client::InitialConnection();
 
+  while (!IncomingParameters.processFinished) { 
+    IncomingParameters = _10klab::tcp_client::IncomingParameters(server_ip);
+    Serial.println(IncomingParameters.pumpId);
 
+    if (IncomingParameters.pumpId != error_data) {
+      Serial.println("data arrived, start process");
+      IncomingParameters.pumpId = error_data;
+      _10klab::tcp_client::SendAnswer(server_ip);
+      delay(5000);
+    }
+    // delay(500);
+  }
+}
