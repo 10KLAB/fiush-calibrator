@@ -33,7 +33,8 @@ struct PumpParameters IncomingParameters(String server_ip) {
   const int error_data = 99;
 
   if (client.connect(host_ip, 8000)) {
-    client.println("Data arrived");
+    client.print("Data arrived");
+    delay(100);
     while (client.connected() || client.available()) {
       memset(input_buffer, 0, input_buffer_size);
 

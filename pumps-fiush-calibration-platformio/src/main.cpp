@@ -5,10 +5,11 @@
 #include "eeprom-manager.h"
 #include "linealization.h"
 #include "scale.h"
+#include "pump_control.h"
 #include <Arduino.h>
 
-#define BUTTON_ONE 16
-#define BUTTON_TWO 4
+#define BUTTON_ONE 39
+#define BUTTON_TWO 36
 
 Pushbutton button_one(BUTTON_ONE);
 Pushbutton button_two(BUTTON_TWO);
@@ -26,6 +27,9 @@ void setup() {
   // delay(100);
   // _10klab::eeprom::SaveCoefficients(0.84, 0.24);
   // _10klab::scale::SetUpScale();
+  _10klab::pumps::PumpsInitialization();
+  // delay(1000);
+
   _10klab::connection_manager::ConenctWifi();
 
   Serial.println("holi");
@@ -183,10 +187,19 @@ void PumpsCaracterizationMode() {
 
     if (IncomingParameters.pumpId != error_data) {
       Serial.println("data arrived, start process");
+      _10klab::pumps::PriorityOrder(IncomingParameters.pumpId-1, IncomingParameters.pulses, 
+                                    IncomingParameters.priority-1, IncomingParameters.rotation, 
+                                    IncomingParameters.ka, IncomingParameters.kb,
+                                    98, 98, 98, 0 ,1 ,0, 
+                                    98, 98, 98, 0 ,1 ,0,
+                                    98, 98, 98, 0 ,1 ,0,
+                                    98, 98, 98, 0 ,1 ,0,
+                                    98, 98, 98, 0 ,1 ,0);
       IncomingParameters.pumpId = error_data;
       _10klab::tcp_client::SendAnswer(server_ip);
-      delay(5000);
+      // delay(5000);
     }
+    // delay(100);
     // delay(500);
   }
 }
