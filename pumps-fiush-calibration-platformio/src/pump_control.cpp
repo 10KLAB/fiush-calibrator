@@ -41,7 +41,7 @@ void PumpsInitialization(){
 }
 
 void AllPCFLow() {
-  Serial.print("en low");
+  // Serial.print("en low");
   for (int i = 0; i < 8; i++) {
     PCF1_output.write(i, LOW);
   }
@@ -55,7 +55,7 @@ void AllPCFLow() {
 
 void AllPCFHigh()
 {
-  Serial.print("en high");
+  // Serial.print("en high");
   for (int i = 0; i < 8; i++)
   {
     PCF1_output.write(i, HIGH);
@@ -169,9 +169,9 @@ void PriorityOrder( int pump1, int ml1, int priority1, bool rotation1, float ka1
     minilliters[i] = MinillitersToPulses(minilliters[i], calibration_ka[i], calibration_kb[i]);
   }
 
-  for (int i = 0; i < pump_number; i++) {
-    Serial.println(pumps[i]);
-  }
+  // for (int i = 0; i < pump_number; i++) {
+  //   Serial.println(pumps[i]);
+  // }
 
   digitalWrite(ENABLE_PUMPS, HIGH);
   AllPCFLow();
@@ -192,17 +192,17 @@ void PriorityOrder( int pump1, int ml1, int priority1, bool rotation1, float ka1
       }
     }
   }
-  Serial.println("    same priority");
-  for(int i = 0; i < pump_number; i++) {
-    Serial.println(same_priority[i]);
-  }
+  // Serial.println("    same priority");
+  // for(int i = 0; i < pump_number; i++) {
+  //   Serial.println(same_priority[i]);
+  // }
   delay(2000);
 
   for (int i = 0; i < pump_number; i++) {
     if (same_priority[i] == 0) {
       same_priority[i] = 99;
     }
-    Serial.println(same_priority[i]);
+    // Serial.println(same_priority[i]);
   }
 
   for (int i = 0; i < pump_number; i++) {
@@ -219,19 +219,19 @@ void PriorityOrder( int pump1, int ml1, int priority1, bool rotation1, float ka1
     }
   }
 
-  Serial.println("bombas");
-  for (int i = 0; i < pump_number; i++) {
-    Serial.println(pumps[i]);
-  }
-  Serial.println("ml");
-  for (int i = 0; i < pump_number; i++) {
-    Serial.println(minilliters[i]);
-  }
-  Serial.println("prioridad");
-  for (int i = 0; i < pump_number; i++) {
-    Serial.println(pumps_priority[i]);
-  }
-  Serial.println("/////////////");
+  // Serial.println("bombas");
+  // for (int i = 0; i < pump_number; i++) {
+  //   Serial.println(pumps[i]);
+  // }
+  // Serial.println("ml");
+  // for (int i = 0; i < pump_number; i++) {
+  //   Serial.println(minilliters[i]);
+  // }
+  // Serial.println("prioridad");
+  // for (int i = 0; i < pump_number; i++) {
+  //   Serial.println(pumps_priority[i]);
+  // }
+  // Serial.println("/////////////");
 
 
   InitialEncodersRead();
@@ -274,8 +274,8 @@ void PriorityOrder( int pump1, int ml1, int priority1, bool rotation1, float ka1
           // digitalWrite(real_pumps[pumps[i]], HIGH);//RELAY
           // digitalWrite(pumps[i], HIGH);
           auxiliarOutputs.set(real_pumps[i], HIGH);
-          Serial.println("bomba encendida " + String(real_pumps[i]) +
-                         " i = " + String(i));
+          // Serial.println("bomba encendida " + String(real_pumps[i]) +
+          //                " i = " + String(i));
         }
       }
     }

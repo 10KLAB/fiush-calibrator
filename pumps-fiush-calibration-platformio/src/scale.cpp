@@ -50,6 +50,18 @@ float GetUnits(int samples){
     return value;
 
 }
+float StableMeasure(){
+  float prev_weight = 0;
+  float weight = GetUnits(10);
+
+  while((weight - prev_weight) > 0.5 || (weight - prev_weight) < 0){
+    prev_weight = weight;
+    delay(250);
+    weight = GetUnits(10);
+    Serial.println(weight-prev_weight);
+  }
+  return weight;
+}
 
 } // namespace scale
 } // namespace _10klab

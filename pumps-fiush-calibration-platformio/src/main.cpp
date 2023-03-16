@@ -29,7 +29,8 @@ void setup() {
   // delay(100);
   // _10klab::eeprom::SaveCoefficients(0.84, 0.24);
   _10klab::scale::SetUpScale();
-  // _10klab::pumps::PumpsInitialization();
+  delay(100);
+  _10klab::pumps::PumpsInitialization();
   // delay(1000);
   _10klab::screen::ScreenSetup();
 
@@ -255,8 +256,11 @@ void PumpsCaracterizationMode() {
 
   IncomingParameters.pumpId = error_data;
   IncomingParameters.processFinished = false;
+  _10klab::screen::PrintScreen(0, 0, "Connecting...", true);
   _10klab::udp_client::UDPInitializer();
   String server_ip = _10klab::udp_client::InitialConnection();
+  _10klab::screen::PrintScreen(0, 0, "Connected!", true);
+  delay(1000);
 
   while (!IncomingParameters.processFinished) {
     IncomingParameters = _10klab::tcp_client::IncomingParameters(server_ip);
@@ -264,20 +268,36 @@ void PumpsCaracterizationMode() {
 
     if (IncomingParameters.pumpId != error_data) {
       Serial.println("data arrived, start process");
+        _10klab::screen::PrintScreen(0, 0, "Pump:" + String(IncomingParameters.pumpId+1) + " 25%", true);
+        _10klab::screen::PrintScreen(0, 1, "Overall:100%", false);
+      // delay(500);
+      // _10klab::scale::Tare();
+      delay(250);
+      _10klab::scale::Tare();
+      // delay(2000);
       _10klab::pumps::PriorityOrder(
           IncomingParameters.pumpId - 1, IncomingParameters.pulses,
           IncomingParameters.priority - 1, IncomingParameters.rotation,
           IncomingParameters.ka, IncomingParameters.kb, 98, 98, 98, 0, 1, 0, 98,
           98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98, 98, 98,
           0, 1, 0);
+
+      delay(1000);
+      float measure = _10klab::scale::StableMeasure();
+      Serial.println("measure: " + String(measure));
       IncomingParameters.pumpId = error_data;
-      _10klab::tcp_client::SendAnswer(server_ip);
-      // delay(5000);
+
     }
-    // delay(100);
-    // delay(500);
+
   }
+  _10klab::screen::PrintScreen(0, 0, "Caracterization", true);
+  _10klab::screen::PrintScreen(0, 1 ,"completed!", false);
+  Serial.println("exit");
+  delay(2000);
+  
 }
+
+
 
 void UpdateButtonsState() {
   delay(500);
