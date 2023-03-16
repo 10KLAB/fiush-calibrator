@@ -5,7 +5,7 @@
 namespace _10klab {
 namespace tcp_client {
 // void SendJSON();
-void SendAnswer(String answer);
+void SendAnswer(String answer, bool step_finished, float grams);
 void IncommingData(String answer);
 
 struct PumpParameters {
@@ -15,7 +15,10 @@ struct PumpParameters {
     unsigned long pulses;
     float ka;
     float kb;
+    bool prime_pump;
     bool processFinished;
+    int pump_progress;
+    int test_progress;
 };
 struct PumpParameters IncomingParameters(String server_ip);
 

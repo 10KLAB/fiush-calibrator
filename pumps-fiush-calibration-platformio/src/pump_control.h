@@ -13,6 +13,8 @@ namespace _10klab
                             int pump5, int ml5, int priority5, bool rotation5, float ka5, float kb5,
                             int pump6, int ml6, int priority6, bool rotation6, float ka6, float kb6                                                
                             );
+        void SinglePumpActivation(int pump);
+        void SinglePumpDeactivation(int pump);
     }
 }
 

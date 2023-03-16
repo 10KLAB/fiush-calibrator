@@ -397,5 +397,16 @@ void PriorityOrder( int pump1, int ml1, int priority1, bool rotation1, float ka1
   AllPCFLow();
 }
 
+void SinglePumpActivation(int pump){
+  digitalWrite(ENABLE_PUMPS, HIGH);
+  delay(500);
+  auxiliarOutputs.set(pump, HIGH);
+}
+void SinglePumpDeactivation(int pump){
+  digitalWrite(ENABLE_PUMPS, LOW);
+  auxiliarOutputs.set(pump, LOW);
+}
+
+
 } // namespace pumps
 } // namespace _10klab

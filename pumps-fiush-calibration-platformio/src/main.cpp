@@ -253,6 +253,10 @@ void ManualMode() {
 void PumpsCaracterizationMode() {
   _10klab::tcp_client::PumpParameters IncomingParameters;
   const int error_data = 99;
+  const int max_recipient_capacity = 300;
+  const int prime_amount = 100;
+  float prime_measure = 0;
+  const int unloading_pump_id = 12;
 
   IncomingParameters.pumpId = error_data;
   IncomingParameters.processFinished = false;
@@ -266,18 +270,27 @@ void PumpsCaracterizationMode() {
     IncomingParameters = _10klab::tcp_client::IncomingParameters(server_ip);
     Serial.println(IncomingParameters.pumpId);
 
-    if (IncomingParameters.pumpId != error_data) {
+    if (IncomingParameters.pumpId != error_data && !IncomingParameters.processFinished) {
       Serial.println("data arrived, start process");
-        _10klab::screen::PrintScreen(0, 0, "Pump:" + String(IncomingParameters.pumpId+1) + " 25%", true);
-        _10klab::screen::PrintScreen(0, 1, "Overall:100%", false);
-      // delay(500);
-      // _10klab::scale::Tare();
-      delay(250);
+        _10klab::screen::PrintScreen(0, 0, "Pump:" + String(IncomingParameters.pumpId+1) + " " + String(IncomingParameters.pump_progress) + "%", true);
+        _10klab::screen::PrintScreen(0, 1, "Overall:" + String(IncomingParameters.test_progress) + "%", false);
+        if(IncomingParameters.prime_pump){
+          prime_measure = 0;
+          _10klab::scale::Tare();
+          _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
+          while(prime_measure < prime_amount){
+            prime_measure = _10klab::scale::GetUnits(10);
+            delay(300);
+          }
+          prime_measure = _10klab::scale::GetUnits(10);
+          _10klab::pumps::SinglePumpDeactivation(IncomingParameters.pumpId);
+        }
+
       _10klab::scale::Tare();
       // delay(2000);
       _10klab::pumps::PriorityOrder(
-          IncomingParameters.pumpId - 1, IncomingParameters.pulses,
-          IncomingParameters.priority - 1, IncomingParameters.rotation,
+          IncomingParameters.pumpId, IncomingParameters.pulses,
+          IncomingParameters.priority, IncomingParameters.rotation,
           IncomingParameters.ka, IncomingParameters.kb, 98, 98, 98, 0, 1, 0, 98,
           98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98, 98, 98,
           0, 1, 0);
@@ -286,6 +299,19 @@ void PumpsCaracterizationMode() {
       float measure = _10klab::scale::StableMeasure();
       Serial.println("measure: " + String(measure));
       IncomingParameters.pumpId = error_data;
+
+      if(measure >= max_recipient_capacity - prime_measure){
+        float unloading_measure = max_recipient_capacity * 2;
+        _10klab::pumps::SinglePumpActivation(unloading_pump_id);
+        while(unloading_measure > max_recipient_capacity){
+          unloading_measure = _10klab::scale::GetUnits(10);
+          delay(300);
+        }
+        _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
+        prime_measure = 0;
+      }
+      _10klab::tcp_client::SendAnswer(server_ip, true, measure);
+
 
     }
 
