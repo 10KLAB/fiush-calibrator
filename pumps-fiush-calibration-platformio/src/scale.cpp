@@ -5,8 +5,8 @@
 #include <Arduino.h>
 
 
-#define LOADCELL_DOUT_PIN 27
-#define LOADCELL_SCK_PIN 26
+#define LOADCELL_DOUT_PIN 32
+#define LOADCELL_SCK_PIN 33
 
 namespace _10klab {
 namespace scale {
@@ -17,6 +17,7 @@ _10klab::eeprom::MemoryCoefficients ReadCoefficients;
 void Tare();
 
 void SetUpScale() {
+    _10klab::eeprom::SetupEEPROM();
   loadCell.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
   loadCell.set_scale(800);
   Tare();

@@ -49,6 +49,7 @@ void SaveCoefficients(float ka, float kb) {
   int integer_kb = kb;
   int fractional_kb = ((kb + 0.01) - integer_kb) * float_to_integer_factor;
 
+  
   Serial.println("integer ka= " + String(integer_ka) +
                  " fraction ka: " + String(fractional_ka));
   Serial.println("integer kb= " + String(integer_kb) +
