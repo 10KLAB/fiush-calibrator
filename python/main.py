@@ -28,7 +28,7 @@ def read_pulse_sequence():
 def InputData():
     pumps_slots = []
     file_names = []
-    pump_counter = 1
+
     while True:
         try:
             pumps_to_calibrate = int(input("[?] Provide the number of pumps to calibrate  "))
@@ -54,11 +54,11 @@ def InputData():
             except ValueError:
                 print("[!] Invalid input, try again.")
                 continue
-
+        pumps_slots = []
         while True:
             try:
                 slot = (int(input("[?] Provide the slot machine for the pump [{}]  ".format(i+1))))
-                if np.isin(slot, pumps_slots):
+                if 1>2:
                     print("[!] Slot already in use\n")
                 else:
                     pumps_slots.append(slot)
@@ -66,7 +66,8 @@ def InputData():
             except ValueError:
                 print("[!] Invalid input, try again.")
                 continue
-
+    
+    # pumps_slots = np.array([pumps_slots])
     print("pumps_slots: " + str(pumps_slots))
     print("file_names: " + str(file_names))
     return file_names, pumps_slots
@@ -197,23 +198,17 @@ def Caracterization(pulse_sequence, filenames, pumps_slots):
 
 
 def main():
-    pulses = [100, 100, 100]
-    filenames = ['99uno.txt', '99dos.txt', 'tres.txt']
-    pumps_slots = [23]
 
-    BrodcastUDP()
+    pulses = read_pulse_sequence()
+    filenames, pumps_slots = InputData()
+
+
+    # pumps_slots = [23, 22, 21]
+    # BrodcastUDP()
     Caracterization(pulses, filenames, pumps_slots)
 
 
-    # pulses = read_pulse_sequence()
-    # filenames, pumps_slots = InputData()
     # pumps_slots = np.subtract(pumps_slots, 1)
-
-
-    
-
-
-
 
 
 
