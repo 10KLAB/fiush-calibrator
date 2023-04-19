@@ -2,6 +2,7 @@
 #include "ArduinoJson.h"
 #include <Arduino.h>
 #include <WiFi.h>
+#include "screen_lcd.h"
 
 namespace _10klab {
 namespace tcp_client {
@@ -19,19 +20,22 @@ void SendAnswer(String answer, bool step_finished, float grams) {
   uint8_t output_json[output_buffer_size] = {0};
   serializeJson(output_doc, output_json);
 
-  
+  // Conéctate al servidor
+  bool retry_send = false;
+  while (!retry_send) {
 
-    // Conéctate al servidor
     if (client.connect(host_ip, 8000)) {
       client.write(output_json, output_buffer_size);
+      retry_send = true;
+      client.stop();
     } else {
-      Serial.println("Error al conectarse al servidor");
+      _10klab::screen::PrintScreen(0, 0, "Connection", true);
+      _10klab::screen::PrintScreen(0, 1, "problem", false);
+      Serial.println("Error al conectarse al servidor sender");
     }
+  }
 
-    // Cierra la conexión con el servidor
-    client.stop();
-
-  
+  // Cierra la conexión con el servidor
 }
 
 struct PumpParameters IncomingParameters(String server_ip) {
@@ -48,48 +52,56 @@ struct PumpParameters IncomingParameters(String server_ip) {
 
   const int error_data = 99;
 
-  if (client.connect(host_ip, 8000)) {
-    client.write(output_json, output_buffer_size);
-    delay(100);
-    while (client.connected() || client.available()) {
-      memset(input_buffer, 0, input_buffer_size);
+  bool retry_incoming = false;
+  while (!retry_incoming) {
 
-      if (client.read(input_buffer, input_buffer_size) > 0) {
-        Serial.print("Server to client: ");
-        Serial.println((char *)input_buffer);
-      }
-      DeserializationError error = deserializeJson(input_doc, input_buffer);
-      if (error) {
-        Serial.print(F("deserializeJson() failed: "));
-        Serial.println(error.f_str());
-        return {.pumpId = error_data};
-      }
-      client.stop();
-      bool processFinished = input_doc["processFinished"];
-      int pumpId = input_doc["pump"];
-      int priority = input_doc["priority"];
-      bool rotation = input_doc["rotation"];
-      unsigned long pulses = input_doc["pulses"];
-      float ka = input_doc["ka"];
-      float kb = input_doc["kb"];
-      bool prime_pump = input_doc["primePump"];
-      int pump_progress = input_doc["pumpProgress"];
-      int test_progress = input_doc["testProgress"];
+    if (client.connect(host_ip, 8000)) {
+      client.write(output_json, output_buffer_size);
+      delay(100);
+      while (client.connected() || client.available()) {
+        memset(input_buffer, 0, input_buffer_size);
 
-      return {.pumpId = pumpId,
-              .priority = priority,
-              .rotation = rotation,
-              .pulses = pulses,
-              .ka = ka,
-              .kb = kb,
-              .prime_pump = prime_pump,
-              .processFinished = processFinished,
-              .pump_progress = pump_progress,
-              .test_progress = test_progress};
+        if (client.read(input_buffer, input_buffer_size) > 0) {
+          Serial.print("Server to client: ");
+          Serial.println((char *)input_buffer);
+        }
+        DeserializationError error = deserializeJson(input_doc, input_buffer);
+        if (error) {
+          Serial.print(F("deserializeJson() failed: "));
+          Serial.println(error.f_str());
+          return {.pumpId = error_data};
+        } else {
+          client.stop();
+          retry_incoming = true;
+        }
+        bool processFinished = input_doc["processFinished"];
+        int pumpId = input_doc["pump"];
+        int priority = input_doc["priority"];
+        bool rotation = input_doc["rotation"];
+        unsigned long pulses = input_doc["pulses"];
+        float ka = input_doc["ka"];
+        float kb = input_doc["kb"];
+        bool prime_pump = input_doc["primePump"];
+        int pump_progress = input_doc["pumpProgress"];
+        int test_progress = input_doc["testProgress"];
+
+        return {.pumpId = pumpId,
+                .priority = priority,
+                .rotation = rotation,
+                .pulses = pulses,
+                .ka = ka,
+                .kb = kb,
+                .prime_pump = prime_pump,
+                .processFinished = processFinished,
+                .pump_progress = pump_progress,
+                .test_progress = test_progress};
+      }
+
+    } else {
+      Serial.println("Error al conectarse al servidor incoming");
+      _10klab::screen::PrintScreen(0, 0, "Connection", true);
+      _10klab::screen::PrintScreen(0, 1, "problem", false);
     }
-
-  } else {
-    Serial.println("Error al conectarse al servidor");
   }
   return {.pumpId = error_data};
 }

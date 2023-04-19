@@ -9,7 +9,8 @@ namespace _10klab{
         float GetRaw(int samples);
         float GetUnits(int samples);
         void UpdateCoefficients();
-        float StableMeasure();
+        float StableMeasure(bool enable_negatives);
+        float StableMeasure2(int pulses, float input_threshold);
 
     }
 }

@@ -399,7 +399,7 @@ void PriorityOrder( int pump1, int ml1, int priority1, bool rotation1, float ka1
 
 void SinglePumpActivation(int pump){
   digitalWrite(ENABLE_PUMPS, HIGH);
-  delay(500);
+  delay(1000);
   auxiliarOutputs.set(pump, HIGH);
 }
 void SinglePumpDeactivation(int pump){
