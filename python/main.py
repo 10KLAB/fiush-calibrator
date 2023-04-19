@@ -198,6 +198,7 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
                 file_type = "r+"
 
             file_path = Path(path_name + '/' + filenames[i])
+            server_socket.settimeout(5)
             with open(file_path, file_type) as file:
                 if file_type == "w":
                     file.write("{}\t\t{}\n".format("pulses", "grams"))
@@ -212,6 +213,9 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
                         incoming_data = json.loads(incoming_data)
                         # print(incoming_data)
                         step_finished = incoming_data['stepFinished']
+                    except socket.timeout:
+                        # print("[!]Timeout")
+                        print('[!]Waiting for connection....')
                     except ConnectionResetError:
                         print("[!]Lost connection?")
                         continue
