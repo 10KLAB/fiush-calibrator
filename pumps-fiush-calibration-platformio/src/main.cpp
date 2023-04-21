@@ -25,22 +25,24 @@ void SelectionMenu();
 
 void setup() {
   Serial.begin(115200);
-  // _10klab::eeprom::SetupEEPROM();
-  // delay(100);
-  // _10klab::eeprom::SaveCoefficients(0.84, 0.24);
+
   _10klab::scale::SetUpScale();
   delay(100);
   _10klab::pumps::PumpsInitialization();
-  // delay(1000);
+
   _10klab::screen::ScreenSetup();
+
+  _10klab::screen::PrintScreen(0, 0, "Fiush", true);
+  _10klab::screen::PrintScreen(0, 1, "Calibrator", false);
+  delay(1000);
+  _10klab::screen::PrintScreen(0, 0, "Wifi setup", true);
 
   _10klab::connection_manager::ConenctWifi();
 
-  Serial.println("holi");
-
-  // EEPROM.write(0, 5);
-  // int a = EEPROM.read(0);
-  // Serial.println(a);
+  _10klab::screen::PrintScreen(0, 0, "Wifi connected!", true);
+  delay(1000);
+  
+  Serial.println("started");
 
   SelectionMenu();
 }

@@ -3,6 +3,7 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include "screen_lcd.h"
+#include "connection_manager.h"
 
 namespace _10klab {
 namespace tcp_client {
@@ -32,6 +33,7 @@ void SendAnswer(String answer, bool step_finished, float grams) {
       _10klab::screen::PrintScreen(0, 0, "Connection", true);
       _10klab::screen::PrintScreen(0, 1, "problem", false);
       Serial.println("Error al conectarse al servidor sender");
+      _10klab::connection_manager::ReconnectWifi();
     }
   }
 
@@ -101,49 +103,12 @@ struct PumpParameters IncomingParameters(String server_ip) {
       Serial.println("Error al conectarse al servidor incoming");
       _10klab::screen::PrintScreen(0, 0, "Connection", true);
       _10klab::screen::PrintScreen(0, 1, "problem", false);
+      _10klab::connection_manager::ReconnectWifi();
     }
   }
   return {.pumpId = error_data};
 }
 
-// void IncommingData(String answer) {
-//   const char *host_ip = answer.c_str();
-//   const uint8_t input_buffer_size = 100;
-//   uint8_t input_buffer[input_buffer_size] = {0};
-//   StaticJsonDocument<input_buffer_size> input_doc;
-
-//   if (client.connect(host_ip, 8000)) {
-//     // client.println("Hola servidor");
-//     while (client.connected() || client.available()) {
-//       memset(input_buffer, 0, input_buffer_size);
-
-//       if (client.read(input_buffer, input_buffer_size) > 0) {
-//         Serial.print("Server to client: ");
-//         Serial.println((char *)input_buffer);
-//       }
-//       DeserializationError error = deserializeJson(input_doc, input_buffer);
-//       if (error) {
-//         Serial.print(F("deserializeJson() failed: "));
-//         Serial.println(error.f_str());
-//       }
-//       int pump = input_doc["pump"];
-//       int priority = input_doc["priority"];
-//       bool rotation = input_doc["rotation"];
-//       unsigned long pulses = input_doc["pulses"];
-//       float ka = input_doc["ka"];
-//       float kb = input_doc["kb"];
-//       Serial.println("pump: " + String(pump));
-//       Serial.println("priority: " + String(priority));
-//       Serial.println("rotation: " + String(rotation));
-//       Serial.println("pulses: " + String(pulses));
-//       Serial.println("ka: " + String(ka));
-//       Serial.println("kb: " + String(kb));
-//     }
-//   } else {
-//     Serial.println("Error al conectarse al servidor");
-//   }
-//   client.stop();
-// }
 
 } // namespace tcp_client
 } // namespace _10klab

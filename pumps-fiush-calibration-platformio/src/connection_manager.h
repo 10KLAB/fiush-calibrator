@@ -4,6 +4,7 @@
 
 namespace _10klab {
 namespace connection_manager {
+void ReconnectWifi();
 void EraseCredentials();
 void ConenctWifi();
 String myIp();

@@ -2,6 +2,7 @@
 #include <Arduino.h>
 #include <WiFiManager.h>
 #include <ESPmDNS.h>
+#include <WiFi.h>
 
 
 
@@ -13,17 +14,23 @@ namespace _10klab {
 namespace connection_manager {
 void wifiPinDefinition() { pinMode(RESET_CREDENTIALS_PIN, INPUT); }
 
+void ReconnectWifi(){
+  static String saved_SSID = wifiManager.getWiFiSSID();
+  static String saved_PASS = wifiManager.getWiFiPass();
+  const char* SSID = saved_SSID.c_str();
+  const char* PASS = saved_PASS.c_str();
+  Serial.println("on reconnect... SSID: " + String(SSID) + " Pass: " + String(PASS));
+  WiFi.begin(SSID, PASS);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(1000);
+    Serial.println("Connecting...");
+  }
+}
+
 void ConenctWifi() {
   static bool connection_message_flag = false;
 
-  // if (!digitalRead(RESET_CREDENTIALS_PIN))
-  // {
-  //     Serial.println("Credentials Reset");
-  //     wifiManager.resetSettings();
-  // }
-  // wifiManager.resetSettings();
-
-  if (!wifiManager.autoConnect("WiFiManagerAP", "password")) {
+  if (!wifiManager.autoConnect("fiush-calibrator", "fiush12345")) {
     Serial.println("failed to connect and hit timeout");
     // reset and try again, or maybe put it to deep sleep
     ESP.restart();
@@ -37,7 +44,11 @@ void ConenctWifi() {
     MDNS.begin("calibrator-scale");
     connection_message_flag = true;
   }
+    ReconnectWifi();
 }
+
+
+
 String myIp(){
   String ip = WiFi.localIP().toString();
   return ip;

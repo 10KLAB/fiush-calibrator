@@ -152,8 +152,8 @@ if(previous_weigth <= 0){
     end_flag = true;
 
     if(weigth < 10){
-      if(input_threshold < 0.4){
-        input_threshold = 0.4;
+      if(input_threshold < 2){
+        input_threshold = 2;
       }
     }
     if(previous_pulses > pulses){
