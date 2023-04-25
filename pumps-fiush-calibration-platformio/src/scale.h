@@ -11,6 +11,7 @@ namespace _10klab{
         void UpdateCoefficients();
         float StableMeasure(bool enable_negatives);
         float StableMeasure2(int pulses, float input_threshold);
+        float CalibratorMeasure(bool enable_tare);
 
     }
 }

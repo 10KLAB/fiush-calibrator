@@ -112,6 +112,37 @@ float StableMeasure(bool enable_negatives) {
   return weight;
 }
 
+
+float CalibratorMeasure(bool enable_tare) {
+  float prev_weight = 0;
+  float weight = GetRaw(10);
+  unsigned int previous_time = millis();
+  const int timeout = 10000;
+
+
+    if(enable_tare){
+      Tare();
+    }
+    while ((weight - prev_weight) > 0.1 || weight - prev_weight < -0.5 || weight < -0.1) {
+      prev_weight = weight;
+      delay(250);
+      weight = GetRaw(10);
+      Serial.println("w8 for correct measure unloading " + String(weight) +
+                     " // " + String(weight - prev_weight));
+
+    if((millis() > previous_time + timeout) && enable_tare){
+      Serial.println("tare unloading");
+      Tare();
+      previous_time = millis();
+    }
+    
+  }
+
+  Serial.println("stable weight = " + String(weight));
+  return weight;
+}
+
+
 float StableMeasure2(int pulses, float input_threshold) {
   const int delay_time = 300;
   const int samples = 2;

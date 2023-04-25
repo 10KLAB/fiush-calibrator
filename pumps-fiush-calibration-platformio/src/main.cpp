@@ -36,7 +36,7 @@ void setup() {
   _10klab::screen::PrintScreen(0, 1, "Calibrator", false);
   delay(1000);
   _10klab::screen::PrintScreen(0, 0, "Wifi setup", true);
-
+  delay(2000);
   _10klab::connection_manager::ConenctWifi();
 
   _10klab::screen::PrintScreen(0, 0, "Wifi connected!", true);
@@ -158,6 +158,7 @@ void WaitingForButtonSelect() {
 void CalibrationMode() {
   float data_x[12] = {0};
   float data_y[12] = {0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 1200};
+  // float data_y[4] = {0, 1, 2, 5};
   // float data_x[4] = {0};
   // float data_y[4] = {0, 1, 50, 1200};
   const int data_length = sizeof(data_y) / sizeof(float);
@@ -174,10 +175,12 @@ void CalibrationMode() {
   Serial.println("tarando");
   UpdateButtonsState();
 
-  _10klab::scale::Tare();
-  delay(500);
-  data_x[0] = _10klab::scale::GetRaw(10);
-  _10klab::scale::Tare();
+  // _10klab::scale::Tare();
+  _10klab::scale::CalibratorMeasure(true);
+  // delay(500);
+  data_x[0] = _10klab::scale::CalibratorMeasure(false);
+  // _10klab::scale::Tare();
+ _10klab::scale::CalibratorMeasure(true);
 
   Serial.println("peso 0: " + String(data_x[0]));
   Serial.println("poner peso 1 y presionar boton");
@@ -188,8 +191,10 @@ void CalibrationMode() {
 
   while (step_counter < data_length) {
     if (button_select.getSingleDebouncedPress()) {
-      delay(300);
-      data_x[step_counter] = _10klab::scale::GetRaw(10);
+      // delay(300);
+      // data_x[step_counter] = _10klab::scale::GetRaw(10);
+      _10klab::screen::PrintScreen(0, 1, "...", true);
+      data_x[step_counter] = _10klab::scale::CalibratorMeasure(false);
 
       Serial.println("retire el peso y presione el boton");
       _10klab::screen::PrintScreen(0, 0, "Remove Items", true);
@@ -197,9 +202,10 @@ void CalibrationMode() {
       WaitingForButtonSelect();
       _10klab::screen::PrintScreen(0, 1, "...", true);
       Serial.println("peso: " + String(data_x[step_counter]));
-      delay(250);
-      _10klab::scale::Tare();
-      delay(250);
+      // delay(250);
+      // _10klab::scale::Tare();
+      _10klab::scale::CalibratorMeasure(true);
+      // delay(250);
       step_counter++;
       Serial.println("poner peso #: " + String(step_counter));
       _10klab::screen::PrintScreen(
