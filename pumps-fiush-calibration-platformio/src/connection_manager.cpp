@@ -14,16 +14,33 @@ namespace _10klab {
 namespace connection_manager {
 void wifiPinDefinition() { pinMode(RESET_CREDENTIALS_PIN, INPUT); }
 
+void Disconnect(){
+  wifiManager.disconnect();
+}
+
 void ReconnectWifi(){
   static String saved_SSID = wifiManager.getWiFiSSID();
   static String saved_PASS = wifiManager.getWiFiPass();
   const char* SSID = saved_SSID.c_str();
   const char* PASS = saved_PASS.c_str();
   Serial.println("on reconnect... SSID: " + String(SSID) + " Pass: " + String(PASS));
+
+  if(WiFi.status() != WL_CONNECTED){
+    Serial.println("disconnected");
   WiFi.begin(SSID, PASS);
+  }
+  int timeout = 0;
   while (WiFi.status() != WL_CONNECTED) {
     delay(1000);
     Serial.println("Connecting...");
+    timeout++;
+    if(timeout >= 10){
+      wifiManager.disconnect();
+      delay(3000);
+      WiFi.begin(SSID, PASS);
+      timeout = 0;
+    }
+
   }
 }
 

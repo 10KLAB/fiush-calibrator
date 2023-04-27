@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import os
 from datetime import datetime
+import select
 
 
 
@@ -144,11 +145,13 @@ def BrodcastUDP():
 def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
     host_name = socket.gethostname()
     ip_address = socket.gethostbyname(host_name)
+    connections_number = 20
 
     server_address = (ip_address, 8000)
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(server_address)
-    server_socket.listen(1)
+    server_socket.listen(connections_number)
+    server_socket.settimeout(5)
     progress_counter = 0
 
     for i in range(len(pumps_slots)):
@@ -198,32 +201,73 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
                 file_type = "r+"
 
             file_path = Path(path_name + '/' + filenames[i])
-            server_socket.settimeout(5)
+            # server_socket.settimeout(5)
             with open(file_path, file_type) as file:
                 if file_type == "w":
                     file.write("{}\t\t{}\n".format("pulses", "grams"))
+                server_socket = None
+                client_socket = None
                 while step_finished == False:
                     print('[!]Waiting for connection...')
+
+                    #/////////////////////////////////////////////////////////////////////
+                    if not server_socket:
+                        # print("1")
+                        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        # print("2")
+                        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                        # print("3")
+                        server_socket.bind(server_address)
+                        # print("4")
+                        server_socket.listen(connections_number)
+                        # print("5")
+                        server_socket.settimeout(5)
+                        # print("6")
+                        # time.sleep(1)
                     try:
+                        # print("7")
                         client_socket, client_address = server_socket.accept()
+                        # print("8")
+                        client_socket.settimeout(5)
                         client_socket.sendall(json_pump_data)
+                        # print(json_pump_data)
+                        # print("9")
                         incoming_data = client_socket.recv(1024)
+                        # print("10")
                         incoming_data = incoming_data.replace(b'\x00', b'')
+                        # print("11")
                         incoming_data = incoming_data.decode('utf-8')
+                        # print("12")
                         incoming_data = json.loads(incoming_data)
                         # print(incoming_data)
                         step_finished = incoming_data['stepFinished']
+                        # client_socket.close()
+                        # server_socket.close()
                     except socket.timeout:
                         # print("[!]Timeout")
                         print('[!]Waiting for connection....')
                     except ConnectionResetError:
-                        print("[!]Lost connection?")
+                        print("[!]Connection reset")
+                        server_socket.close()
+                        client_socket.close()
+                        server_socket = None
+                        server_socket = None
                         continue
                     except socket.error as e:
                         print(f"[!]Socket error: {e}")
-
-                    time.sleep(0.1)
-
+                        server_socket.close()
+                        client_socket.close()
+                        server_socket = None
+                        server_socket = None
+                        continue
+                    except Exception as e:
+                        print(f"Se ha producido un error: {str(e)}")
+                        server_socket.close()
+                        client_socket.close()
+                        server_socket = None
+                        server_socket = None
+                        continue
+##//////////////////////////////////////////////////////////////////////////////////////
                     # try:
                     #     incoming_data = client_socket.recv(1024)
                     # except socket.error as e:
@@ -244,8 +288,16 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
                         print('[!]Pump progress: ' + str(pump_progress) + '%')
                         print('[!]Overall progress: ' + str(test_progress) + '%')
                         print('________________________________________________________________')
-                    else:
-                        time.sleep(0.5)
+        
+                        if server_socket:
+                            server_socket.close()
+                            client_socket.close()
+                            server_socket = None
+
+                            # time.sleep(1)
+                            # print("socket cerrado")
+                    # else:
+                        # time.sleep(0.5)
                         # print("!")
 
 

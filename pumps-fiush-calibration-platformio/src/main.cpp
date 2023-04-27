@@ -8,6 +8,7 @@
 #include "scale.h"
 #include "screen_lcd.h"
 #include <Arduino.h>
+#include "connection_manager.h"
 
 #define BUTTON_CHANGE 39
 #define BUTTON_SELECT 36
@@ -26,9 +27,9 @@ void SelectionMenu();
 void setup() {
   Serial.begin(115200);
 
-  _10klab::scale::SetUpScale();
+  // _10klab::scale::SetUpScale();
   delay(100);
-  _10klab::pumps::PumpsInitialization();
+  // _10klab::pumps::PumpsInitialization();
 
   _10klab::screen::ScreenSetup();
 
@@ -44,7 +45,8 @@ void setup() {
   
   Serial.println("started");
 
-  SelectionMenu();
+  // SelectionMenu();
+  PumpsCaracterizationMode();
 }
 
 void loop() {
@@ -369,7 +371,7 @@ void PumpsCaracterizationMode() {
   IncomingParameters.pumpId = error_data;
   IncomingParameters.processFinished = false;
 
-  float threshold = SelectThreshold();
+  // float threshold = SelectThreshold();
 
   _10klab::screen::PrintScreen(0, 0, "Connecting...", true);
   _10klab::udp_client::UDPInitializer();
@@ -399,153 +401,174 @@ void PumpsCaracterizationMode() {
 
       ////////////////////////////////UNLOADING////////////////////
 
-      if (measure >= max_recipient_capacity) {
-        Serial.println("unloading start");
+      // if (measure >= max_recipient_capacity) {
+      //   Serial.println("unloading start");
 
-        float unloading_measure = max_recipient_capacity * 2;
-        _10klab::pumps::SinglePumpActivation(unloading_pump_id);
-        // delay(1000);
-        // Serial.println("RETIRAR");
-        while (unloading_measure > max_recipient_capacity) {
-          unloading_measure = _10klab::scale::GetUnits(10);
-          Serial.println("unloading measure = " + String(unloading_measure));
-          delay(300);
-        }
-        // delay(2000);
-        _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
-        Serial.println("unloading end");
-      }
+      //   float unloading_measure = max_recipient_capacity * 2;
+      //   _10klab::pumps::SinglePumpActivation(unloading_pump_id);
+      //   // delay(1000);
+      //   // Serial.println("RETIRAR");
+      //   while (unloading_measure > max_recipient_capacity) {
+      //     unloading_measure = _10klab::scale::GetUnits(10);
+      //     Serial.println("unloading measure = " + String(unloading_measure));
+      //     delay(300);
+      //   }
+      //   // delay(2000);
+      //   _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
+      //   Serial.println("unloading end");
+      // }
 
       ///////////////////////////// PRIME///////////////////
 
       if (IncomingParameters.prime_pump) {
         Serial.println("prime startr");
-        prime_measure = 0;
-        // _10klab::scale::Tare();
-        // delay(500);
-        float stable_measure = 99;
-        while (stable_measure > 0.3 || stable_measure < -0.3) {
-          _10klab::scale::Tare();
-          stable_measure = _10klab::scale::StableMeasure(false);
-          delay(300);
-          Serial.println("on w8");
-        }
+        // prime_measure = 0;
+        // // _10klab::scale::Tare();
+        // // delay(500);
+        // float stable_measure = 99;
+        // while (stable_measure > 0.3 || stable_measure < -0.3) {
+        //   _10klab::scale::Tare();
+        //   stable_measure = _10klab::scale::StableMeasure(false);
+        //   delay(300);
+        //   Serial.println("on w8");
+        // }
 
-        bool half_prime = false;
-        _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
-        while (prime_measure < prime_amount) {
-          prime_measure = _10klab::scale::GetUnits(10);
-          Serial.println("on prime");
-          delay(300);
-          if(prime_measure >= (prime_amount/2) && !half_prime){
-            _10klab::pumps::SinglePumpDeactivation(IncomingParameters.pumpId);
-            delay(1500);
-            _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
-            half_prime = true;
-          }
-        }
+        // bool half_prime = false;
+        // _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
+        // while (prime_measure < prime_amount) {
+        //   prime_measure = _10klab::scale::GetUnits(10);
+        //   Serial.println("on prime");
+        //   delay(300);
+        //   if(prime_measure >= (prime_amount/2) && !half_prime){
+        //     _10klab::pumps::SinglePumpDeactivation(IncomingParameters.pumpId);
+        //     delay(1500);
+        //     _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
+        //     half_prime = true;
+        //   }
+        // }
 
-        _10klab::pumps::SinglePumpDeactivation(IncomingParameters.pumpId);
-        // delay(2000);
-        // prime_measure = _10klab::scale::GetUnits(10);
-        prime_measure = _10klab::scale::StableMeasure(false);
+        // _10klab::pumps::SinglePumpDeactivation(IncomingParameters.pumpId);
+        // // delay(2000);
+        // // prime_measure = _10klab::scale::GetUnits(10);
+        // prime_measure = _10klab::scale::StableMeasure(false);
 
-        //////////////////////////////
-        Serial.println("Prime measure before unloading = " +
-                       String(prime_measure));
-        if (prime_measure >= max_recipient_capacity) {
-          Serial.println("unloading prime startr");
+        // //////////////////////////////
+        // Serial.println("Prime measure before unloading = " +
+        //                String(prime_measure));
+        // if (prime_measure >= max_recipient_capacity) {
+        //   Serial.println("unloading prime startr");
 
-          float unloading_measure = max_recipient_capacity * 2;
-          _10klab::pumps::SinglePumpActivation(unloading_pump_id);
-          unsigned long timeout = millis();
-          const int max_time = 15000;
+        //   float unloading_measure = max_recipient_capacity * 2;
+        //   _10klab::pumps::SinglePumpActivation(unloading_pump_id);
+        //   unsigned long timeout = millis();
+        //   const int max_time = 15000;
 
-          while (unloading_measure > max_recipient_capacity) {
-            unloading_measure = _10klab::scale::GetUnits(10);
-            Serial.println("unloading prime measure = " +
-                           String(unloading_measure));
-            if(millis() > timeout + max_time) {
-              _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
-              _10klab::scale::Tare();
+        //   while (unloading_measure > max_recipient_capacity) {
+        //     unloading_measure = _10klab::scale::GetUnits(10);
+        //     Serial.println("unloading prime measure = " +
+        //                    String(unloading_measure));
+        //     if(millis() > timeout + max_time) {
+        //       _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
+        //       _10klab::scale::Tare();
 
-            }
-            delay(300);
-            if(unloading_measure <= max_recipient_capacity){
-              Serial.println("on check");
-              _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
-              unloading_measure = _10klab::scale::StableMeasure(false);
+        //     }
+        //     delay(300);
+        //     if(unloading_measure <= max_recipient_capacity){
+        //       Serial.println("on check");
+        //       _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
+        //       unloading_measure = _10klab::scale::StableMeasure(false);
               
-              if(unloading_measure > max_recipient_capacity){
-                _10klab::pumps::SinglePumpActivation(unloading_pump_id);
-              }
-            }
-          }
+        //       if(unloading_measure > max_recipient_capacity){
+        //         _10klab::pumps::SinglePumpActivation(unloading_pump_id);
+        //       }
+        //     }
+        //   }
 
-          Serial.println("unloading prime end");
+        //   Serial.println("unloading prime end");
 
-        }
+        // }
+        delay(1000);
         Serial.println("prime end");
       }
 
-      bool verification = false;
-      while (!verification) {
-        delay(500);
+      // bool verification = false;
+      // while (!verification) {
+      //   delay(500);
 
         
-          float stable_measure = 99;
-          while (stable_measure > 0.3 || stable_measure < -0.3) {
-            _10klab::scale::Tare();
-            stable_measure = _10klab::scale::StableMeasure(false);
-            if(stable_measure < 0.3 && stable_measure > -0.3){
-              delay(1000);
-              stable_measure = _10klab::scale::StableMeasure(false);
-            }
-          }
+      //     float stable_measure = 99;
+      //     while (stable_measure > 0.3 || stable_measure < -0.3) {
+      //       _10klab::scale::Tare();
+      //       stable_measure = _10klab::scale::StableMeasure(false);
+      //       if(stable_measure < 0.3 && stable_measure > -0.3){
+      //         delay(1000);
+      //         stable_measure = _10klab::scale::StableMeasure(false);
+      //       }
+      //     }
         
-        _10klab::tcp_client::SendAnswer(server_ip, false, 0);
-        _10klab::pumps::PriorityOrder(
-            IncomingParameters.pumpId, IncomingParameters.pulses,
-            IncomingParameters.priority, IncomingParameters.rotation,
-            IncomingParameters.ka, IncomingParameters.kb, 98, 98, 98, 0, 1, 0,
-            98, 98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98,
-            98, 98, 0, 1, 0);
+      //   _10klab::tcp_client::SendAnswer(server_ip, false, 0);
+      //   _10klab::pumps::PriorityOrder(
+      //       IncomingParameters.pumpId, IncomingParameters.pulses,
+      //       IncomingParameters.priority, IncomingParameters.rotation,
+      //       IncomingParameters.ka, IncomingParameters.kb, 98, 98, 98, 0, 1, 0,
+      //       98, 98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98,
+      //       98, 98, 0, 1, 0);
 
-        // delay(5000);
-        // measure = _10klab::scale::StableMeasure(true);
-        measure = _10klab::scale::StableMeasure2(IncomingParameters.pulses, threshold);
-        if (measure == -1) {
-          _10klab::pumps::SinglePumpActivation(unloading_pump_id);
-          int unload_delay = IncomingParameters.pulses * 1.5;
-          delay(unload_delay);
-          _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
-          delay(3000);
-        }
-        if (measure != -1) {
-          verification = true;
-        }
-      }
+      //   // delay(5000);
+      //   // measure = _10klab::scale::StableMeasure(true);
+      //   measure = _10klab::scale::StableMeasure2(IncomingParameters.pulses, threshold);
+      //   if (measure == -1) {
+      //     _10klab::pumps::SinglePumpActivation(unloading_pump_id);
+      //     int unload_delay = IncomingParameters.pulses * 1.5;
+      //     delay(unload_delay);
+      //     _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
+      //     delay(3000);
+      //   }
+      //   if (measure != -1) {
+      //     verification = true;
+      //   }
+      // }
+
+      // for(int i = 0; i < 10; i++){
+      //   _10klab::tcp_client::SendAnswer(server_ip, false, 0);
+      //   delay(1000);
+      // }
 
       Serial.println("measure: " + String(measure));
       IncomingParameters.pumpId = error_data;
+      static float test_data = 0;
+      static int timer = 500;
+      delay(timer);
 
-      _10klab::tcp_client::SendAnswer(server_ip, true, measure);
+      _10klab::tcp_client::SendAnswer(server_ip, true, timer);
+      test_data++;
+      // timer+=500;
+
+      static bool disconnect = false;
+      static int time_disconnect = 1000;
+      if(disconnect==false){
+        _10klab::connection_manager::Disconnect();
+        // time_disconnect = timer + 500;
+        // timer = 0;
+        // delay(2000);
+        // disconnect = true;
+      }
     }
   }
 
-  if (measure >= max_recipient_capacity) {
-    Serial.println("End unloading start");
+  // if (measure >= max_recipient_capacity) {
+  //   Serial.println("End unloading start");
 
-    float unloading_measure = max_recipient_capacity * 2;
-    _10klab::pumps::SinglePumpActivation(unloading_pump_id);
-    while (unloading_measure > max_recipient_capacity) {
-      unloading_measure = _10klab::scale::GetUnits(10);
-      Serial.println("unloading measure = " + String(unloading_measure));
-      delay(300);
-    }
-    _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
-    Serial.println("End unloading end");
-  }
+  //   float unloading_measure = max_recipient_capacity * 2;
+  //   _10klab::pumps::SinglePumpActivation(unloading_pump_id);
+  //   while (unloading_measure > max_recipient_capacity) {
+  //     unloading_measure = _10klab::scale::GetUnits(10);
+  //     Serial.println("unloading measure = " + String(unloading_measure));
+  //     delay(300);
+  //   }
+  //   _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
+  //   Serial.println("End unloading end");
+  // }
 
   _10klab::screen::PrintScreen(0, 0, "Caracterization", true);
   _10klab::screen::PrintScreen(0, 1, "completed!", false);
@@ -558,150 +581,3 @@ void UpdateButtonsState() {
   button_change.getSingleDebouncedPress();
   button_select.getSingleDebouncedPress();
 }
-
-// void PumpsCaracterizationMode()
-// {
-//   _10klab::tcp_client::PumpParameters IncomingParameters;
-//   const int error_data = 99;
-//   const int max_recipient_capacity = 20;
-//   const int prime_amount = 50;
-//   float prime_measure = 0;
-//   const int unloading_pump_id = 0;
-//   float acumulative_amount = 0;
-
-//   IncomingParameters.pumpId = error_data;
-//   IncomingParameters.processFinished = false;
-//   _10klab::screen::PrintScreen(0, 0, "Connecting...", true);
-//   _10klab::udp_client::UDPInitializer();
-//   String server_ip = _10klab::udp_client::InitialConnection();
-//   _10klab::screen::PrintScreen(0, 0, "Connected!", true);
-//   delay(1000);
-
-//   while (!IncomingParameters.processFinished)
-//   {
-//     IncomingParameters = _10klab::tcp_client::IncomingParameters(server_ip);
-//     Serial.println(IncomingParameters.pumpId);
-
-//     if (IncomingParameters.processFinished)
-//     {
-//       _10klab::tcp_client::SendAnswer(server_ip, true, 0);
-//     }
-
-//     if (IncomingParameters.pumpId != error_data &&
-//         !IncomingParameters.processFinished)
-//     {
-//       Serial.println("data arrived, start process");
-//       _10klab::screen::PrintScreen(
-//           0, 0,
-//           "Pump:" + String(IncomingParameters.pumpId + 1) + " " +
-//               String(IncomingParameters.pump_progress) + "%",
-//           true);
-//       _10klab::screen::PrintScreen(
-//           0, 1, "Overall:" + String(IncomingParameters.test_progress) + "%",
-//           false);
-
-//       Serial.println("acumulated = " + String(acumulative_amount));
-
-//       if (acumulative_amount >= max_recipient_capacity)
-//       {
-
-//         float unloading_measure = max_recipient_capacity * 2;
-//         _10klab::pumps::SinglePumpActivation(unloading_pump_id);
-//         while (unloading_measure > max_recipient_capacity)
-//         {
-//           unloading_measure = _10klab::scale::GetUnits(10);
-//           Serial.println("unloading measure = " + String(unloading_measure));
-//           delay(300);
-//         }
-//         _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
-//         prime_measure = 0;
-//         delay(500);
-//         acumulative_amount = _10klab::scale::GetUnits(10);
-//         while(acumulative_amount < 0){
-//           acumulative_amount = _10klab::scale::GetUnits(10);
-//         }
-//         delay(500);
-//       }
-//       Serial.println("acumulated after unload = " +
-//       String(acumulative_amount));
-
-//       if (IncomingParameters.prime_pump)
-//       {
-//         prime_measure = 0;
-//         _10klab::scale::Tare();
-//         delay(500);
-//         _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
-//         while (prime_measure < prime_amount)
-//         {
-//           prime_measure = _10klab::scale::GetUnits(10);
-//           delay(300);
-//         }
-//         delay(500);
-//         prime_measure = _10klab::scale::GetUnits(10);
-//         _10klab::pumps::SinglePumpDeactivation(IncomingParameters.pumpId);
-//         acumulative_amount = acumulative_amount + prime_measure;
-//       }
-
-//       // Serial.println("acumulated = " + String(acumulative_amount));
-
-//       // if (acumulative_amount >= max_recipient_capacity)
-//       // {
-//       //   Serial.println("unloading!!");
-//       //   float unloading_measure = max_recipient_capacity * 2;
-//       //   _10klab::pumps::SinglePumpActivation(unloading_pump_id);
-//       //   while (unloading_measure > max_recipient_capacity)
-//       //   {
-//       //     unloading_measure = _10klab::scale::GetUnits(10);
-//       //     Serial.println("unloading measure = " +
-//       String(unloading_measure));
-//       //     delay(300);
-//       //   }
-//       //   _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
-//       //   prime_measure = 0;
-//       //   delay(300);
-//       //   acumulative_amount = _10klab::scale::GetUnits(10);
-//       // }
-
-//       _10klab::scale::Tare();
-//       // delay(2000);
-//       _10klab::pumps::PriorityOrder(
-//           IncomingParameters.pumpId, IncomingParameters.pulses,
-//           IncomingParameters.priority, IncomingParameters.rotation,
-//           IncomingParameters.ka, IncomingParameters.kb, 98, 98, 98, 0, 1, 0,
-//           98, 98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98,
-//           98, 98, 0, 1, 0);
-
-//       delay(1000);
-//       float measure = _10klab::scale::StableMeasure();
-//       acumulative_amount = acumulative_amount + measure;
-//       Serial.println("measure: " + String(measure));
-//       IncomingParameters.pumpId = error_data;
-
-//       _10klab::tcp_client::SendAnswer(server_ip, true, measure);
-//     }
-//   }
-
-//   // if (acumulative_amount >= max_recipient_capacity)
-//   // {
-//   //   Serial.println("unloading!!");
-//   //   float unloading_measure = max_recipient_capacity * 2;
-//   //   _10klab::pumps::SinglePumpActivation(unloading_pump_id);
-//   //   while (unloading_measure > max_recipient_capacity)
-//   //   {
-//   //     unloading_measure = _10klab::scale::GetUnits(10);
-//   //     Serial.println("unloading measure = " + String(unloading_measure));
-//   //     delay(300);
-//   //   }
-//   //   _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
-//   //   prime_measure = 0;
-//   //   delay(500);
-//   //   acumulative_amount = _10klab::scale::GetUnits(10);
-//   //   while(acumulative_amount < 0){
-//   //     acumulative_amount = _10klab::scale::GetUnits(10);
-//   //   }
-//   // }
-//   _10klab::screen::PrintScreen(0, 0, "Caracterization", true);
-//   _10klab::screen::PrintScreen(0, 1, "completed!", false);
-//   Serial.println("exit");
-//   delay(2000);
-// }

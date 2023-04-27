@@ -10,7 +10,16 @@ namespace tcp_client {
 WiFiClient client;
 const uint16_t serverPort = 8000;
 
+void SetTimeout(){
+    static bool start_flag = true;
+    if(start_flag){
+      client.setTimeout(5);
+      start_flag = false;
+    }
+}
+
 void SendAnswer(String answer, bool step_finished, float grams) {
+  SetTimeout();
 
   const char *host_ip = answer.c_str();
 
@@ -45,6 +54,8 @@ struct PumpParameters IncomingParameters(String server_ip) {
   const uint16_t input_buffer_size = 500;
   uint8_t input_buffer[input_buffer_size] = {0};
   StaticJsonDocument<input_buffer_size> input_doc;
+  SetTimeout();
+
 
   const uint16_t output_buffer_size = 50;
   StaticJsonDocument<output_buffer_size> output_doc;
@@ -57,9 +68,10 @@ struct PumpParameters IncomingParameters(String server_ip) {
   bool retry_incoming = false;
   while (!retry_incoming) {
 
+
     if (client.connect(host_ip, 8000)) {
       client.write(output_json, output_buffer_size);
-      delay(100);
+      delay(1000);
       while (client.connected() || client.available()) {
         memset(input_buffer, 0, input_buffer_size);
 
