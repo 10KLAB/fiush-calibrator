@@ -226,20 +226,21 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
                         # time.sleep(1)
                     try:
                         # print("7")
+                        
                         client_socket, client_address = server_socket.accept()
-                        # print("8")
                         client_socket.settimeout(5)
+                    # print("8")
                         client_socket.sendall(json_pump_data)
-                        # print(json_pump_data)
-                        # print("9")
+                    # print(json_pump_data)
+                    # print("9")
                         incoming_data = client_socket.recv(1024)
-                        # print("10")
+                    # print("10")
                         incoming_data = incoming_data.replace(b'\x00', b'')
-                        # print("11")
+                    # print("11")
                         incoming_data = incoming_data.decode('utf-8')
-                        # print("12")
+                    # print("12")
                         incoming_data = json.loads(incoming_data)
-                        # print(incoming_data)
+                    # print(incoming_data)
                         step_finished = incoming_data['stepFinished']
                         # client_socket.close()
                         # server_socket.close()
@@ -248,24 +249,30 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
                         print('[!]Waiting for connection....')
                     except ConnectionResetError:
                         print("[!]Connection reset")
-                        server_socket.close()
-                        client_socket.close()
-                        server_socket = None
-                        server_socket = None
+                        if server_socket:
+                            server_socket.close()
+                            server_socket = None
+                        if client_socket:
+                            client_socket.close()
+                            client_socket = None
                         continue
                     except socket.error as e:
                         print(f"[!]Socket error: {e}")
-                        server_socket.close()
-                        client_socket.close()
-                        server_socket = None
-                        server_socket = None
+                        if server_socket:
+                            server_socket.close()
+                            server_socket = None
+                        if client_socket:
+                            client_socket.close()
+                            client_socket = None
                         continue
                     except Exception as e:
                         print(f"Se ha producido un error: {str(e)}")
-                        server_socket.close()
-                        client_socket.close()
-                        server_socket = None
-                        server_socket = None
+                        if server_socket:
+                            server_socket.close()
+                            server_socket = None
+                        if client_socket:
+                            client_socket.close()
+                            client_socket = None
                         continue
 ##//////////////////////////////////////////////////////////////////////////////////////
                     # try:
@@ -291,8 +298,10 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
         
                         if server_socket:
                             server_socket.close()
-                            client_socket.close()
                             server_socket = None
+                        if client_socket:
+                            client_socket.close()
+                            client_socket = None
 
                             # time.sleep(1)
                             # print("socket cerrado")
