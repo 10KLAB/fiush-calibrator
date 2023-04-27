@@ -145,7 +145,7 @@ def BrodcastUDP():
 def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
     host_name = socket.gethostname()
     ip_address = socket.gethostbyname(host_name)
-    connections_number = 20
+    connections_number = 50
 
     server_address = (ip_address, 8000)
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -153,6 +153,7 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
     server_socket.listen(connections_number)
     server_socket.settimeout(5)
     progress_counter = 0
+    reset_socket = 0
 
     for i in range(len(pumps_slots)):
         for j in range(len(pulse_sequence)):
@@ -202,6 +203,7 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
 
             file_path = Path(path_name + '/' + filenames[i])
             # server_socket.settimeout(5)
+            
             with open(file_path, file_type) as file:
                 if file_type == "w":
                     file.write("{}\t\t{}\n".format("pulses", "grams"))
@@ -209,6 +211,21 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
                 client_socket = None
                 while step_finished == False:
                     print('[!]Waiting for connection...')
+                    time.sleep(1)
+
+                    reset_socket+=1
+                    # print(reset_socket)
+                    if reset_socket >= 5:
+                        if server_socket:
+                            server_socket.close()
+                            server_socket = None
+                            print("server closed")
+                        if client_socket:
+                            client_socket.close()
+                            client_socket = None
+                            print("client closed")
+                        reset_socket = 0
+                        print("[!]Connection relunched")
 
                     #/////////////////////////////////////////////////////////////////////
                     if not server_socket:
@@ -223,7 +240,7 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
                         # print("5")
                         server_socket.settimeout(5)
                         # print("6")
-                        # time.sleep(1)
+                        time.sleep(1)
                     try:
                         # print("7")
                         
