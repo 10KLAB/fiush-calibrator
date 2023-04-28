@@ -527,6 +527,7 @@ void PumpsCaracterizationMode() {
         }
         if (measure != -1) {
           verification = true;
+          _10klab::tcp_client::SendAnswer(server_ip, true, measure);
         }
       }
     ////////////////////////////////////////////////////////////////////

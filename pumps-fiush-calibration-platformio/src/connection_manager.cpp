@@ -14,6 +14,12 @@ namespace _10klab {
 namespace connection_manager {
 void wifiPinDefinition() { pinMode(RESET_CREDENTIALS_PIN, INPUT); }
 
+void EraseCredentials(){
+  wifiManager.resetSettings();
+  delay(300);
+  ESP.restart();
+}
+
 void Disconnect(){
   wifiManager.disconnect();
 }
@@ -46,6 +52,7 @@ void ReconnectWifi(){
 
 void ConenctWifi() {
   static bool connection_message_flag = false;
+  MDNS.begin("fiush-calibrator");
 
   if (!wifiManager.autoConnect("fiush-calibrator", "fiush12345")) {
     Serial.println("failed to connect and hit timeout");
@@ -58,7 +65,7 @@ void ConenctWifi() {
     Serial.println("WiFi connected");
     Serial.println("IP address: ");
     Serial.println(WiFi.localIP());
-    MDNS.begin("calibrator-scale");
+    MDNS.begin("fiush-calibrator");
     connection_message_flag = true;
   }
     ReconnectWifi();
@@ -70,11 +77,7 @@ String myIp(){
   String ip = WiFi.localIP().toString();
   return ip;
 }
-void EraseCredentials(){
-  wifiManager.resetSettings();
-  delay(300);
-  ESP.restart();
-}
+
 
 } // namespace connection_manager
 } // namespace _10klab
