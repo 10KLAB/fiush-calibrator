@@ -53,6 +53,7 @@ void ReconnectWifi(){
 void ConenctWifi() {
   static bool connection_message_flag = false;
   MDNS.begin("fiush-calibrator");
+  //holi
 
   if (!wifiManager.autoConnect("fiush-calibrator", "fiush12345")) {
     Serial.println("failed to connect and hit timeout");
