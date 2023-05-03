@@ -407,6 +407,27 @@ void SinglePumpDeactivation(int pump){
   auxiliarOutputs.set(pump, LOW);
 }
 
+void AlarmActivation(int alarm){
+  int delay_time_1 = 300;
+  int delay_time_2 = 700;
+  digitalWrite(ENABLE_PUMPS, HIGH);
+  delay(1000);
+
+  for(int i = 0; i < 6; i++){
+    auxiliarOutputs.set(alarm, HIGH);
+    delay(delay_time_1);
+    if(i == 2){
+      delay(delay_time_2);
+    }
+  }
+
+}
+
+void AlarmDeactivation(int alarm){
+  auxiliarOutputs.set(alarm, LOW);
+  digitalWrite(ENABLE_PUMPS, LOW);
+}
+
 
 } // namespace pumps
 } // namespace _10klab

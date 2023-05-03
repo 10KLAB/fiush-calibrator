@@ -15,6 +15,8 @@ namespace _10klab
                             );
         void SinglePumpActivation(int pump);
         void SinglePumpDeactivation(int pump);
+        void AlarmActivation(int alarm);
+        void AlarmDeactivation(int alarm);
     }
 }
 

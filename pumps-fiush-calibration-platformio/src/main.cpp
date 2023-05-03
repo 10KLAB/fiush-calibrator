@@ -63,6 +63,7 @@ void SelectionMenu() {
 
   _10klab::screen::PrintScreen(0, 0, "Pump", true);
   _10klab::screen::PrintScreen(0, 1, "Caracterization", false);
+  page = 1;
 
   Serial.println("Page 0");
   while (true) {
@@ -140,10 +141,15 @@ void SelectionMenu() {
 
       case 3:
         Serial.println("borrando credenciales");
+        _10klab::screen::PrintScreen(0, 0, "Erasing", true);
+        _10klab::screen::PrintScreen(0, 1, "Credentials", false);
+        delay(2000);
         _10klab::connection_manager::EraseCredentials();
 
       default:
-        Serial.println("out of range");
+        Serial.println("menu out of range");
+        _10klab::screen::PrintScreen(0, 0, "Menu", true);
+        _10klab::screen::PrintScreen(0, 1, "Out range", false);
         break;
       }
       page = 0;
@@ -409,7 +415,9 @@ void PumpsCaracterizationMode() {
         _10klab::pumps::SinglePumpActivation(unloading_pump_id);
         // delay(1000);
         // Serial.println("RETIRAR");
-        while (unloading_measure > max_recipient_capacity) {
+        unsigned long timeout = millis();
+        int timeout_time = 20000;
+        while ((unloading_measure > max_recipient_capacity) || (millis() > timeout + timeout_time)) {
           unloading_measure = _10klab::scale::GetUnits(10);
           Serial.println("unloading measure = " + String(unloading_measure));
           delay(300);
@@ -442,7 +450,7 @@ void PumpsCaracterizationMode() {
           delay(300);
           if(prime_measure >= (prime_amount/2) && !half_prime){
             _10klab::pumps::SinglePumpDeactivation(IncomingParameters.pumpId);
-            delay(1500);
+            delay(500);
             _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
             half_prime = true;
           }
@@ -493,10 +501,12 @@ void PumpsCaracterizationMode() {
       }
 
       bool verification = false;
+      int verification_cicle_counter = 0;
+      const int verification_cicles = 3;
+      const int alarm_output = 11;
       while (!verification) {
         delay(500);
 
-        
           float stable_measure = 99;
           while (stable_measure > 0.3 || stable_measure < -0.3) {
             _10klab::scale::Tare();
@@ -529,7 +539,13 @@ void PumpsCaracterizationMode() {
           verification = true;
           _10klab::tcp_client::SendAnswer(server_ip, true, measure);
         }
+
+        
+        if(verification_cicle_counter >= verification_cicles ){
+          _10klab::pumps::AlarmActivation(alarm_output);
+        }
       }
+      _10klab::pumps::AlarmDeactivation(alarm_output);
     ////////////////////////////////////////////////////////////////////
       // for(int i = 0; i < 10; i++){
       //   _10klab::tcp_client::SendAnswer(server_ip, false, 0);
