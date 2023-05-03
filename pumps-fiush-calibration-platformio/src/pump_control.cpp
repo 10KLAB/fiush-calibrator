@@ -408,7 +408,7 @@ void SinglePumpDeactivation(int pump){
 }
 
 void AlarmActivation(int alarm){
-  int delay_time_1 = 300;
+  int delay_time_1 = 50;
   int delay_time_2 = 700;
   digitalWrite(ENABLE_PUMPS, HIGH);
   delay(1000);
@@ -416,10 +416,13 @@ void AlarmActivation(int alarm){
   for(int i = 0; i < 6; i++){
     auxiliarOutputs.set(alarm, HIGH);
     delay(delay_time_1);
+    auxiliarOutputs.set(alarm, LOW);
+    delay(delay_time_1);
     if(i == 2){
       delay(delay_time_2);
     }
   }
+  auxiliarOutputs.set(alarm, LOW);
 
 }
 

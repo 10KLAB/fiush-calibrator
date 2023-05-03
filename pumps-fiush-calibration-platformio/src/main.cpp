@@ -57,13 +57,15 @@ void loop() {
 }
 
 void SelectionMenu() {
-  static int page = 0;
+  int page = 0;
   static bool selected = false;
   static bool skip_one_screen = true;
+  static bool start_image = true;
 
   _10klab::screen::PrintScreen(0, 0, "Pump", true);
   _10klab::screen::PrintScreen(0, 1, "Caracterization", false);
-  page = 1;
+  // page = 1;
+  // delay(500);
 
   Serial.println("Page 0");
   while (true) {
@@ -72,7 +74,12 @@ void SelectionMenu() {
       skip_one_screen = false;
     }
 
-    if (button_change.getSingleDebouncedPress()) {
+    if (button_change.getSingleDebouncedPress() || start_image) {
+      start_image = false;
+      if (page > 3) {
+        page = 0;
+        Serial.println("Page: " + String(page));
+      }
       switch (page) {
       case 0:
         _10klab::screen::PrintScreen(0, 0, "Pump", true);
@@ -95,10 +102,10 @@ void SelectionMenu() {
       Serial.println("Page: " + String(page));
       page++;
 
-      if (page > 3) {
-        page = 0;
-        Serial.println("Page: " + String(page));
-      }
+      // if (page > 4) {
+      //   page = 0;
+      //   Serial.println("Page: " + String(page));
+      // }
     }
 
     if (button_select.getSingleDebouncedPress()) {
@@ -108,6 +115,7 @@ void SelectionMenu() {
     }
 
     if (selected) {
+
       switch (page - 1) {
       case 0:
         Serial.println("Pump caracterization Mode");
@@ -416,7 +424,7 @@ void PumpsCaracterizationMode() {
         // delay(1000);
         // Serial.println("RETIRAR");
         unsigned long timeout = millis();
-        int timeout_time = 20000;
+        int timeout_time = 35000;
         while ((unloading_measure > max_recipient_capacity) || (millis() > timeout + timeout_time)) {
           unloading_measure = _10klab::scale::GetUnits(10);
           Serial.println("unloading measure = " + String(unloading_measure));
@@ -502,7 +510,7 @@ void PumpsCaracterizationMode() {
 
       bool verification = false;
       int verification_cicle_counter = 0;
-      const int verification_cicles = 3;
+      const int verification_cicles = 2;
       const int alarm_output = 11;
       while (!verification) {
         delay(500);
@@ -540,10 +548,11 @@ void PumpsCaracterizationMode() {
           _10klab::tcp_client::SendAnswer(server_ip, true, measure);
         }
 
-        
+        Serial.println("alarm counter = " + String(verification_cicle_counter));
         if(verification_cicle_counter >= verification_cicles ){
           _10klab::pumps::AlarmActivation(alarm_output);
         }
+        verification_cicle_counter++;
       }
       _10klab::pumps::AlarmDeactivation(alarm_output);
       //develop branch
