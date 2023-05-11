@@ -34,6 +34,7 @@ struct Coefficients GetCoefficients(const float data_x[], const float data_y[],
   const float f = CalculateF(data_x, length, m);
   const float i = CalculateI(length, e, f);
 
+//hi
   // y = m*x + i
   // Serial.println("n= " + String(n));
   // Serial.println("a= " + String(a));
