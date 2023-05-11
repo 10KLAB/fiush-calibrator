@@ -8,7 +8,7 @@
 #include "scale.h"
 #include "screen_lcd.h"
 #include <Arduino.h>
-#include "connection_manager.h"
+
 
 #define BUTTON_CHANGE 39
 #define BUTTON_SELECT 36
@@ -43,7 +43,7 @@ void setup() {
 
   _10klab::screen::PrintScreen(0, 0, "Wifi connected!", true);
   delay(1000);
-  
+
   Serial.println("started");
 
   SelectionMenu();
@@ -57,6 +57,13 @@ void loop() {
 }
 
 void SelectionMenu() {
+  // This function is a menu that allows the user to select from four different
+  // options:
+  //   * Pump characterization mode
+  //   * Manual mode
+  //   * Calibration mode
+  //   * Clear WiFi credentials
+
   int page = 0;
   static bool selected = false;
   static bool skip_one_screen = true;
@@ -68,12 +75,14 @@ void SelectionMenu() {
   // delay(500);
 
   Serial.println("Page 0");
+  // While the user has not selected an option:
   while (true) {
     if (skip_one_screen) {
       page++;
       skip_one_screen = false;
     }
 
+    // If the user presses the change button or the start image flag is true:
     if (button_change.getSingleDebouncedPress() || start_image) {
       start_image = false;
       if (page > 3) {
@@ -108,6 +117,7 @@ void SelectionMenu() {
       // }
     }
 
+    // If the user presses the select button:
     if (button_select.getSingleDebouncedPress()) {
       Serial.println("selected: " + String(page));
       // page = 0;
@@ -173,32 +183,46 @@ void WaitingForButtonSelect() {
 }
 
 void CalibrationMode() {
+  // This function calibrates the scale by measuring the weight of known weights and then fitting a linear equation to the data.
+
+  // Initialize the arrays to store the measured weights and the known weights.
   float data_x[12] = {0};
   float data_y[12] = {0, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 1200};
   // float data_y[4] = {0, 1, 2, 5};
   // float data_x[4] = {0};
   // float data_y[4] = {0, 1, 50, 1200};
+
+  // Get the length of the arrays.
   const int data_length = sizeof(data_y) / sizeof(float);
   int step_counter = 1;
+
   Serial.println("retirar objetos y presionar boton");
+
+  // Print a message to the screen asking the user to remove all objects from the scale.
   _10klab::screen::PrintScreen(0, 0, "Remove Items", true);
   _10klab::screen::PrintScreen(0, 1, "and press Select", false);
 
   _10klab::linealization::Coefficients GetCoefficients;
 
   UpdateButtonsState();
+  // Wait for the user to press the select button.
   WaitingForButtonSelect();
+
   _10klab::screen::PrintScreen(0, 1, "...", true);
   Serial.println("tarando");
   UpdateButtonsState();
 
   // _10klab::scale::Tare();
+
+  // Tare the scale.
   _10klab::scale::CalibratorMeasure(true);
   // delay(500);
   data_x[0] = _10klab::scale::CalibratorMeasure(false);
   // _10klab::scale::Tare();
- _10klab::scale::CalibratorMeasure(true);
 
+  // Tare the scale.
+  _10klab::scale::CalibratorMeasure(true);
+  // Print a message to the screen indicating the weight of the first known weight.
   Serial.println("peso 0: " + String(data_x[0]));
   Serial.println("poner peso 1 y presionar boton");
 
@@ -206,13 +230,17 @@ void CalibrationMode() {
       0, 0, "Put weight:" + String(int(data_y[1])) + "g", true);
   _10klab::screen::PrintScreen(0, 1, "and press Select", false);
 
+  // While the user has not placed all of the known weights on the scale:
   while (step_counter < data_length) {
+    // If the user presses the select button:
     if (button_select.getSingleDebouncedPress()) {
       // delay(300);
       // data_x[step_counter] = _10klab::scale::GetRaw(10);
       _10klab::screen::PrintScreen(0, 1, "...", true);
+      // Get the weight of the current known weight.
       data_x[step_counter] = _10klab::scale::CalibratorMeasure(false);
 
+      // Print a message to the screen asking the user to remove the current known weight from the scale.
       Serial.println("retire el peso y presione el boton");
       _10klab::screen::PrintScreen(0, 0, "Remove Items", true);
       _10klab::screen::PrintScreen(0, 1, "and press Select", false);
@@ -224,13 +252,17 @@ void CalibrationMode() {
       _10klab::scale::CalibratorMeasure(true);
       // delay(250);
       step_counter++;
+
+      // Print a message to the screen asking the user to place the next known weight on the scale.
       Serial.println("poner peso #: " + String(step_counter));
       _10klab::screen::PrintScreen(
           0, 0, "Put weight:" + String(int(data_y[step_counter])) + "g", true);
       _10klab::screen::PrintScreen(0, 1, "and press Select", false);
     }
 
+    // If the user presses the change button:
     if (button_change.getSingleDebouncedPress()) {
+      // Print a message to the screen indicating that the calibration was aborted.
       _10klab::screen::PrintScreen(0, 0, "Calibration", true);
       _10klab::screen::PrintScreen(0, 1, "aborted", false);
       delay(2000);
@@ -238,11 +270,14 @@ void CalibrationMode() {
     }
   }
 
+  //calculate the coefficients with the actual data
   GetCoefficients =
       _10klab::linealization::GetCoefficients(data_x, data_y, data_length);
 
   float ka = GetCoefficients.ka;
   float kb = GetCoefficients.kb;
+
+  //Save the coefficients in to EEPROM
 
   _10klab::eeprom::SaveCoefficients(ka, kb);
   _10klab::scale::UpdateCoefficients();
@@ -257,28 +292,35 @@ void CalibrationMode() {
 }
 
 void ManualMode() {
+  // This function enters manual mode, where the user can see the current weight of the object on the scale.
+
+  // Tare the scale.
   _10klab::scale::Tare();
   unsigned long current_time = 0;
   const int refresh_time = 500;
   UpdateButtonsState();
 
+  // While the user has not pressed the select button:
   while (!button_select.getSingleDebouncedPress()) {
-
+    // If the current time is greater than or equal to the refresh time:
     if (millis() >= current_time + refresh_time) {
+      // Get the weight of the object on the scale.
       float value = _10klab::scale::GetUnits(10);
+      // Print the weight of the object on the scale to the screen.
       _10klab::screen::PrintScreen(1, 0, String(value) + " grams", true);
 
       Serial.print("peso= " + String(value));
       current_time = millis();
     }
   }
+  // Print a message to the screen indicating that the user is leaving manual mode.
   _10klab::screen::PrintScreen(0, 0, "Leaving Manual", true);
   _10klab::screen::PrintScreen(0, 1, "mode", false);
   Serial.println("exit");
   delay(2000);
 }
 
-float SelectThreshold(){
+float SelectThreshold() {
   bool selected = false;
   float threshold = 0.1;
   int page = 0;
@@ -290,90 +332,92 @@ float SelectThreshold(){
   _10klab::screen::PrintScreen(0, 1, "10%", false);
   page = 1;
 
-  while(!selected){
+  while (!selected) {
     if (button_change.getSingleDebouncedPress()) {
-      switch(page){
-        case 0:
+      switch (page) {
+      case 0:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
         _10klab::screen::PrintScreen(0, 1, "10%", false);
         threshold = 0.1;
         UpdateButtonsState();
         break;
 
-        case 1:
+      case 1:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
         _10klab::screen::PrintScreen(0, 1, "20%", false);
         threshold = 0.2;
         UpdateButtonsState();
         break;
 
-        case 2:
+      case 2:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
         _10klab::screen::PrintScreen(0, 1, "30%", false);
         threshold = 0.3;
         UpdateButtonsState();
         break;
 
-        case 3:
+      case 3:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
         _10klab::screen::PrintScreen(0, 1, "40%", false);
         threshold = 0.4;
         UpdateButtonsState();
         break;
 
-        case 4:
+      case 4:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
         _10klab::screen::PrintScreen(0, 1, "50%", false);
         threshold = 0.5;
         UpdateButtonsState();
         break;
 
-        case 5:
+      case 5:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
         _10klab::screen::PrintScreen(0, 1, "60%", false);
         threshold = 0.6;
         UpdateButtonsState();
         break;
 
-        case 6:
+      case 6:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
         _10klab::screen::PrintScreen(0, 1, "70%", false);
         threshold = 0.7;
         UpdateButtonsState();
         break;
 
-        case 7:
+      case 7:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
         _10klab::screen::PrintScreen(0, 1, "80%", false);
         threshold = 0.8;
         UpdateButtonsState();
         break;
 
-        case 8:
+      case 8:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
         _10klab::screen::PrintScreen(0, 1, "90%", false);
         threshold = 0.9;
         UpdateButtonsState();
         break;
-    }
+      }
       page++;
-      if(page > 8){
+      if (page > 8) {
         page = 0;
       }
     }
     if (button_select.getSingleDebouncedPress()) {
-      Serial.println("selected: " + String(page) + " Threshold = " + String(threshold));
+      Serial.println("selected: " + String(page) +
+                     " Threshold = " + String(threshold));
       _10klab::screen::PrintScreen(0, 0, "Threshold", true);
-      _10klab::screen::PrintScreen(0, 1, "Selected: " + String(int(threshold*100)) + "%", false);
+      _10klab::screen::PrintScreen(
+          0, 1, "Selected: " + String(int(threshold * 100)) + "%", false);
       delay(2000);
       selected = true;
     }
-
   }
   return threshold;
 }
 
 void PumpsCaracterizationMode() {
+
   _10klab::tcp_client::PumpParameters IncomingParameters;
   const int error_data = 99;
   const int max_recipient_capacity = 5;
@@ -388,20 +432,28 @@ void PumpsCaracterizationMode() {
 
   float threshold = SelectThreshold();
 
+  // Print a message to the screen indicating that the device is connecting to the server.
   _10klab::screen::PrintScreen(0, 0, "Connecting...", true);
+
+  // Initialize the UDP client.
   _10klab::udp_client::UDPInitializer();
+  // Get the IP address of the server.
   String server_ip = _10klab::udp_client::InitialConnection();
   _10klab::screen::PrintScreen(0, 0, "Connected!", true);
   delay(1000);
 
+  // While the server is not finished processing the request:
   while (!IncomingParameters.processFinished) {
+    // Get the current parameters from the server.
     IncomingParameters = _10klab::tcp_client::IncomingParameters(server_ip);
     Serial.println(IncomingParameters.pumpId);
 
+    // If the server is finished processing the request:
     if (IncomingParameters.processFinished) {
       _10klab::tcp_client::SendAnswer(server_ip, true, 0);
     }
 
+    // If the pump ID is not -1 and the server is not finished processing the request:
     if (IncomingParameters.pumpId != error_data &&
         !IncomingParameters.processFinished) {
       Serial.println("data arrived, start process");
@@ -415,17 +467,19 @@ void PumpsCaracterizationMode() {
           false);
 
       ////////////////////////////////UNLOADING////////////////////
-
+      // If the measured weight is greater than or equal to the maximum capacity of the recipient:
       if (measure >= max_recipient_capacity) {
         Serial.println("unloading start");
 
         float unloading_measure = max_recipient_capacity * 2;
+        // Set the pump to the unloading mode.
         _10klab::pumps::SinglePumpActivation(unloading_pump_id);
         // delay(1000);
         // Serial.println("RETIRAR");
         unsigned long timeout = millis();
         int timeout_time = 35000;
-        while ((unloading_measure > max_recipient_capacity) || (millis() > timeout + timeout_time)) {
+        while ((unloading_measure > max_recipient_capacity) ||
+               (millis() > timeout + timeout_time)) {
           unloading_measure = _10klab::scale::GetUnits(10);
           Serial.println("unloading measure = " + String(unloading_measure));
           delay(300);
@@ -456,7 +510,7 @@ void PumpsCaracterizationMode() {
           prime_measure = _10klab::scale::GetUnits(10);
           Serial.println("on prime");
           delay(300);
-          if(prime_measure >= (prime_amount/2) && !half_prime){
+          if (prime_measure >= (prime_amount / 2) && !half_prime) {
             _10klab::pumps::SinglePumpDeactivation(IncomingParameters.pumpId);
             delay(500);
             _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
@@ -472,6 +526,7 @@ void PumpsCaracterizationMode() {
         //////////////////////////////
         Serial.println("Prime measure before unloading = " +
                        String(prime_measure));
+        // If the measured weight is greater than or equal to the maximum capacity of the recipient:
         if (prime_measure >= max_recipient_capacity) {
           Serial.println("unloading prime startr");
 
@@ -484,25 +539,23 @@ void PumpsCaracterizationMode() {
             unloading_measure = _10klab::scale::GetUnits(10);
             Serial.println("unloading prime measure = " +
                            String(unloading_measure));
-            if(millis() > timeout + max_time) {
+            if (millis() > timeout + max_time) {
               _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
               _10klab::scale::Tare();
-
             }
             delay(300);
-            if(unloading_measure <= max_recipient_capacity){
+            if (unloading_measure <= max_recipient_capacity) {
               Serial.println("on check");
               _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
               unloading_measure = _10klab::scale::StableMeasure(false);
-              
-              if(unloading_measure > max_recipient_capacity){
+
+              if (unloading_measure > max_recipient_capacity) {
                 _10klab::pumps::SinglePumpActivation(unloading_pump_id);
               }
             }
           }
 
           Serial.println("unloading prime end");
-
         }
         delay(1000);
         Serial.println("prime end");
@@ -512,19 +565,23 @@ void PumpsCaracterizationMode() {
       int verification_cicle_counter = 0;
       const int verification_cicles = 2;
       const int alarm_output = 11;
+
+      // While the verification has not been successful:
       while (!verification) {
         delay(500);
 
-          float stable_measure = 99;
-          while (stable_measure > 0.3 || stable_measure < -0.3) {
-            _10klab::scale::Tare();
+        float stable_measure = 99;
+        // While the weight is not stable:
+        while (stable_measure > 0.3 || stable_measure < -0.3) {
+          // Reset the scale.
+          _10klab::scale::Tare(); 
+          stable_measure = _10klab::scale::StableMeasure(false);
+          if (stable_measure < 0.3 && stable_measure > -0.3) {
+            delay(1000);
             stable_measure = _10klab::scale::StableMeasure(false);
-            if(stable_measure < 0.3 && stable_measure > -0.3){
-              delay(1000);
-              stable_measure = _10klab::scale::StableMeasure(false);
-            }
           }
-        
+        }
+
         _10klab::tcp_client::SendAnswer(server_ip, false, 0);
         _10klab::pumps::PriorityOrder(
             IncomingParameters.pumpId, IncomingParameters.pulses,
@@ -535,28 +592,34 @@ void PumpsCaracterizationMode() {
 
         // delay(5000);
         // measure = _10klab::scale::StableMeasure(true);
-        measure = _10klab::scale::StableMeasure2(IncomingParameters.pulses, threshold);
+        measure = _10klab::scale::StableMeasure2(IncomingParameters.pulses,
+                                                 threshold);
+        // If the weight is not equal to the desired amount:
         if (measure == -1) {
           _10klab::pumps::SinglePumpActivation(unloading_pump_id);
+          // Delay for the amount of time it takes to unload the recipient.
           int unload_delay = IncomingParameters.pulses * 1.5;
           delay(unload_delay);
           _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
           delay(3000);
         }
+        // If the weight is equal to the desired amount:
         if (measure != -1) {
           verification = true;
+          // Send a message to the server with the measure
           _10klab::tcp_client::SendAnswer(server_ip, true, measure);
         }
 
         Serial.println("alarm counter = " + String(verification_cicle_counter));
-        if(verification_cicle_counter >= verification_cicles ){
+        // If the number of verification cycles has been exceeded:
+        if (verification_cicle_counter >= verification_cicles) {
           _10klab::pumps::AlarmActivation(alarm_output);
         }
         verification_cicle_counter++;
       }
       _10klab::pumps::AlarmDeactivation(alarm_output);
-      //develop branch
-    ////////////////////////////////////////////////////////////////////
+      // develop branch
+      ////////////////////////////////////////////////////////////////////
       // for(int i = 0; i < 10; i++){
       //   _10klab::tcp_client::SendAnswer(server_ip, false, 0);
       //   delay(1000);

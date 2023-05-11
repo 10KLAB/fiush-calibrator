@@ -16,10 +16,14 @@ _10klab::eeprom::MemoryCoefficients ReadCoefficients;
 void Tare();
 
 void SetUpScale() {
+  // Initialize the EEPROM.
   _10klab::eeprom::SetupEEPROM();
+  // Initialize the load cell.
   loadCell.begin(LOADCELL_DOUT_PIN, LOADCELL_SCK_PIN);
+  // Set the scale's scale factor to 750.
   loadCell.set_scale(750);
   Tare();
+  // Read the scale's coefficients from the EEPROM.
   ReadCoefficients = _10klab::eeprom::ReadCoefficients();
 }
 
@@ -32,8 +36,7 @@ void Tare() {
   loadCell.tare();
   // delay(300);
   Serial.println("Tare");
-  // d
-  // dacWrite
+
 }
 
 float GetRaw(int samples) {
@@ -44,9 +47,12 @@ float GetRaw(int samples) {
 }
 
 float GetUnits(int samples) {
+  // Get the raw value from the load cell.
   float average = loadCell.get_units(samples);
+  // Get the scale's coefficients.
   float ka = ReadCoefficients.ka;
   float kb = ReadCoefficients.kb;
+  // Calculate the weight of the object in units.
   float value = (average * ka) + kb;
   // Serial.println("average = " + String(average) + " ka: " + String(ka) + " kb: " + String(kb));
   // Serial.println(value);
@@ -54,45 +60,21 @@ float GetUnits(int samples) {
 }
 
 float StableMeasure(bool enable_negatives) {
+  /*This function measures the weight of an object on the scale and returns the weight if it is stable.
+
+  It does this by repeatedly measuring the weight of the object and checking if the weight has changed 
+  by more than 0.5 units in the last 5 seconds.
+
+  If the weight has not changed by more than 0.5 units in the last 5 seconds, then the weight is 
+  considered to be stable and the function returns the weight.
+
+  Otherwise, the function continues to measure the weight until the weight is stable.*/
+
   float prev_weight = 0;
   float weight = GetUnits(10);
   unsigned int previous_time = millis();
   const int timeout = 5000;
 
-  // if (enable_negatives) {
-
-  //   while ((weight - prev_weight) > 0.5 || (weight - prev_weight) < -3 ||
-  //          weight < 0) {
-
-  //     if (weight >= 0) {
-
-  //       prev_weight = weight;
-  //       delay(600);
-  //       weight = GetUnits(10);
-  //       Serial.println("w8 for correct measure " + String(weight) + " // " +
-  //                      String(weight - prev_weight));
-  //     } else {
-  //       weight = GetUnits(10);
-  //       prev_weight = 0;
-  //       delay(600);
-  //       Serial.println("w8 for correct measure " + String(weight));
-  //     }
-  //   }
-  // } else {
-  //   while ((weight - prev_weight) > 0.5) {
-  //     prev_weight = weight;
-  //     delay(600);
-  //     weight = GetUnits(10);
-  //     Serial.println("w8 for correct measure unloading" + String(weight) +
-  //                    " // " + String(weight - prev_weight));
-
-  //   if(millis() > previous_time + timeout){
-  //     Serial.println("tare");
-  //     Tare();
-  //     previous_time = millis();
-  //   }
-  //   }
-  // }
 
     while ((weight - prev_weight) > 0.5 || weight < -0.5) {
       prev_weight = weight;
@@ -163,15 +145,6 @@ float StableMeasure2(int pulses, float input_threshold) {
     // float previous_weight_treshold = previous_weigth * 50;
   bool end_flag = false;
 
-  
-
-
-  // if(weigth < 0){
-  //   Tare();
-  //   delay(delay_time);
-  //   weigth = GetUnits(average_samples); 
-  // }
-
 
 if(previous_weigth <= 0){
   previous_weigth = weigth;
@@ -208,7 +181,7 @@ if(previous_weigth <= 0){
 
       if((previous_measure[i]/previous_weigth) > treshold_possitive || (previous_measure[i]/previous_weigth) < treshold_negative){
         end_flag = false;
-        if(weight_diff > treshold_possitive){
+        if(weight_diff > treshold_possitive || weight_diff < treshold_negative){
           Serial.println("out of range");
           return -1;
         }
@@ -237,81 +210,3 @@ if(previous_weigth <= 0){
 } // namespace _10klab
 
 
-
-
-
-// float StableMeasure2(int pulses) {
-//   const int delay_time = 300;
-//   const int samples = 2;
-//   const int average_samples = 5;
-//   const float treshold = 0.5;
-//   float previous_measure[samples] = {0};
-//   float weigth = GetUnits(average_samples);
-//   static float previous_weigth = weigth;
-//   static int previous_pulses = 0;
-
-//   unsigned int previous_time = millis();
-//   const int timeout = 7000;
-
-//   float previous_weight_treshold = previous_weigth + 50;
-//     // float previous_weight_treshold = previous_weigth * 50;
-//   bool end_flag = false;
-
-
-//   // if(weigth < 0){
-//   //   Tare();
-//   //   delay(delay_time);
-//   //   weigth = GetUnits(average_samples); 
-//   // }
-
-// if(weigth < 3){
-//   // previous_weigth = weigth;
-//   previous_weight_treshold = 3;
-// }
-
-// if(previous_weigth <= 0){
-//   previous_weigth = weigth;
-// }
-// Serial.println("previous_weigth = " + String(previous_weigth) + " weigth = " + String(weigth) + " diff = " + String(weigth-previous_weigth));
-
-// Serial.println("treshold = " + String(previous_weigth + previous_weight_treshold));
-
-//   while (!end_flag) {
-
-//     for (int i = 0; i < samples; i++) {
-//       previous_measure[i] = GetUnits(average_samples);
-//       delay(delay_time);
-//     }
-
-//     weigth = GetUnits(average_samples);
-//     end_flag = true;
-
-//     for (int i = 0; i < samples; i++) {
-//       Serial.println("Weight = " + String(weigth) + " previous " + String(i) + " = " + String(previous_measure[i]) + " diff = " + String(weigth - previous_measure[i]));
-
-//       if ((weigth - previous_measure[i]) > treshold || (weigth - previous_measure[i]) < -0.5 || weigth > (previous_weight_treshold)) {
-//         end_flag = false;
-//         if(weigth > (previous_weigth*4)){
-//           Serial.println("out of range");
-//           return -1;
-//         }
-
-//         if(millis() > previous_time + timeout){
-//           Serial.println("timeout");
-//           return -1;
-//         }
-//       }
-
-//     }
-//     delay(delay_time);
-//     if(end_flag){
-//       delay(1000);
-//       float verify_weigth = GetUnits(average_samples);
-//       if ((verify_weigth - weigth) > 0.5 || (verify_weigth - weigth) < -0.5){
-//         end_flag = false;
-//       }
-//     }
-//   }
-//   previous_weigth = weigth;
-//   return weigth;
-// }

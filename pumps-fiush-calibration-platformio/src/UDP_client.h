@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #ifndef UDP_CLIENT_H_
 #define UDP_CLIENT_H_
 
