@@ -248,12 +248,17 @@ bool PriorityOrder(int pump1, int ml1, int priority1, bool rotation1, float ka1,
   InitialEncodersRead();
 
   unsigned long current_time = millis();
-  const int timeout = 3000;
+  const int timeout = 110000;
 
   while (process_finished == false) {
 
     if (millis() >= current_time + timeout) {
       Serial.println("pump dispensation timeout");
+      AllPCFLow();
+      for(int i=0 ; i<pump_number; i++){
+        auxiliarOutputs.set(real_pumps[i], LOW);
+      }
+      digitalWrite(ENABLE_PUMPS, LOW);
       return true;
     }
 
@@ -448,36 +453,45 @@ void AlarmActivation(int alarm) {
 }
 
 void DispensationAlarm(int alarm, bool reset) {
-  int delay_time_1 = 50;
-  int delay_time_2 = 700;
+  const int delay_time_1 = 100;
+  const int delay_time_2 = 2500;
   // digitalWrite(ENABLE_PUMPS, HIGH);
   // delay(1000);
   static unsigned long current_time = millis();
   static bool state_alarm = true;
 
+  // Serial.println("on alarm dispensation");
+
   if (reset) {
     digitalWrite(ENABLE_PUMPS, HIGH);
     delay(1000);
     state_alarm = true;
+    Serial.println("on reset alarm");
     current_time = millis();
   }
 
-  else {
+  if(!reset) {
+    // Serial.println("alarm state= " + String(state_alarm));
+    // delay(200);
     if (state_alarm) {
-      auxiliarOutputs.set(alarm, HIGH);
       if (millis() >= current_time + delay_time_1) {
+        auxiliarOutputs.set(alarm, LOW);
         state_alarm = false;
+        Serial.println("alarm on");
         current_time = millis();
       }
+    }
 
       if (!state_alarm) {
-        auxiliarOutputs.set(alarm, LOW);
+        // Serial.println("millis = " + String(millis()) + " timeout = " + String(current_time + delay_time_2));
         if (millis() >= current_time + delay_time_2) {
+          auxiliarOutputs.set(alarm, HIGH);
           state_alarm = true;
+          Serial.println("alarm off");
           current_time = millis();
         }
       }
-    }
+    
   }
 }
 

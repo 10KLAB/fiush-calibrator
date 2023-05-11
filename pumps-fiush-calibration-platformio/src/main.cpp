@@ -24,14 +24,15 @@ void CalibrationMode();
 void ManualMode();
 void PumpsCaracterizationMode();
 void SelectionMenu();
+void DispensationTimeout(String message_top, String message_bottom);
 
 void setup() {
   Serial.begin(115200);
-
   _10klab::scale::SetUpScale();
   delay(100);
+  Serial.println("hi");
   _10klab::pumps::PumpsInitialization();
-
+  Serial.println("hi2");
   _10klab::screen::ScreenSetup();
   delay(1000);
 
@@ -39,6 +40,7 @@ void setup() {
   _10klab::screen::PrintScreen(0, 1, "Calibrator" + version, false);
   delay(1000);
   _10klab::screen::PrintScreen(0, 0, "Wifi setup", true);
+  // DispensationTimeout();
   delay(2000);
   _10klab::connection_manager::ConenctWifi();
 
@@ -417,18 +419,20 @@ float SelectThreshold() {
   return threshold;
 }
 
-void DispensationTimeout() {
+void DispensationTimeout(String message_top, String message_bottom) {
   const int alarm_output = 11;
 
-  _10klab::screen::PrintScreen(0, 0, "Check Cable", true);
-  _10klab::screen::PrintScreen(0, 1, "connection", false);
+  _10klab::screen::PrintScreen(0, 0, message_top, true);
+  _10klab::screen::PrintScreen(0, 1, message_bottom, false);
 
   UpdateButtonsState();
   _10klab::pumps::DispensationAlarm(alarm_output, true);
-
+  Serial.println("alarma dispensado");
   while (!button_select.getSingleDebouncedPress()) {
     _10klab::pumps::DispensationAlarm(alarm_output, false);
+    delay(50);
   }
+  Serial.println("alarma dispensado end");
 
   _10klab::screen::PrintScreen(0, 0, "Ready", true);
   // _10klab::screen::PrintScreen(0, 1, "connection", false);
@@ -526,7 +530,13 @@ void PumpsCaracterizationMode() {
 
         bool half_prime = false;
         _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
+        unsigned long current_time_prime = millis();
+        const int timeout_prime = 63000;
         while (prime_measure < prime_amount) {
+          if(millis() >= current_time_prime + timeout_prime) {
+            _10klab::pumps::SinglePumpDeactivation(IncomingParameters.pumpId);
+            DispensationTimeout("Check pump: "+String(IncomingParameters.pumpId+1), "connection");
+          }
           prime_measure = _10klab::scale::GetUnits(10);
           Serial.println("on prime");
           delay(300);
@@ -612,9 +622,9 @@ void PumpsCaracterizationMode() {
             98, 98, 0, 1, 0);
 
         if(pump_dispensation_alert){
-          DispensationTimeout();
+          DispensationTimeout("Check: pump "+String(IncomingParameters.pumpId+1), "yellow cable");
           _10klab::pumps::SinglePumpActivation(unloading_pump_id);
-          delay(3000);
+          delay(20000);
           _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
           measure = -1;
 
