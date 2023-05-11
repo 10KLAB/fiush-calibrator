@@ -12,6 +12,7 @@
 
 #define BUTTON_CHANGE 39
 #define BUTTON_SELECT 36
+const String version = "1.0.0";
 
 Pushbutton button_change(BUTTON_CHANGE);
 Pushbutton button_select(BUTTON_SELECT);
@@ -35,7 +36,7 @@ void setup() {
   delay(1000);
 
   _10klab::screen::PrintScreen(0, 0, "Fiush", true);
-  _10klab::screen::PrintScreen(0, 1, "Calibrator", false);
+  _10klab::screen::PrintScreen(0, 1, "Calibrator" + version, false);
   delay(1000);
   _10klab::screen::PrintScreen(0, 0, "Wifi setup", true);
   delay(2000);
@@ -416,6 +417,25 @@ float SelectThreshold() {
   return threshold;
 }
 
+void DispensationTimeout() {
+  const int alarm_output = 11;
+
+  _10klab::screen::PrintScreen(0, 0, "Check Cable", true);
+  _10klab::screen::PrintScreen(0, 1, "connection", false);
+
+  UpdateButtonsState();
+  _10klab::pumps::DispensationAlarm(alarm_output, true);
+
+  while (!button_select.getSingleDebouncedPress()) {
+    _10klab::pumps::DispensationAlarm(alarm_output, false);
+  }
+
+  _10klab::screen::PrintScreen(0, 0, "Ready", true);
+  // _10klab::screen::PrintScreen(0, 1, "connection", false);
+  delay(2000);
+
+}
+
 void PumpsCaracterizationMode() {
 
   _10klab::tcp_client::PumpParameters IncomingParameters;
@@ -565,6 +585,7 @@ void PumpsCaracterizationMode() {
       int verification_cicle_counter = 0;
       const int verification_cicles = 2;
       const int alarm_output = 11;
+      bool pump_dispensation_alert = false;
 
       // While the verification has not been successful:
       while (!verification) {
@@ -583,17 +604,29 @@ void PumpsCaracterizationMode() {
         }
 
         _10klab::tcp_client::SendAnswer(server_ip, false, 0);
-        _10klab::pumps::PriorityOrder(
+        pump_dispensation_alert = _10klab::pumps::PriorityOrder(
             IncomingParameters.pumpId, IncomingParameters.pulses,
             IncomingParameters.priority, IncomingParameters.rotation,
             IncomingParameters.ka, IncomingParameters.kb, 98, 98, 98, 0, 1, 0,
             98, 98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98, 98, 98, 0, 1, 0, 98,
             98, 98, 0, 1, 0);
 
+        if(pump_dispensation_alert){
+          DispensationTimeout();
+          _10klab::pumps::SinglePumpActivation(unloading_pump_id);
+          delay(3000);
+          _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
+          measure = -1;
+
+        }
+        else{
+          measure = _10klab::scale::StableMeasure2(IncomingParameters.pulses,
+                                                 threshold);
+        }
         // delay(5000);
         // measure = _10klab::scale::StableMeasure(true);
-        measure = _10klab::scale::StableMeasure2(IncomingParameters.pulses,
-                                                 threshold);
+        // measure = _10klab::scale::StableMeasure2(IncomingParameters.pulses,
+        //                                          threshold);
         // If the weight is not equal to the desired amount:
         if (measure == -1) {
           _10klab::pumps::SinglePumpActivation(unloading_pump_id);

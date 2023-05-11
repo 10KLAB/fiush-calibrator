@@ -94,8 +94,9 @@ void InitialEncodersRead() {
 
 void UpdateEncoders() {
   // This function reads the initial state of the encoders.
-  // For each encoder, read the current state and store it in the `now_read_encoder` array.
-  // Also, store the current state in the `last_read_encoder` array for comparison later.
+  // For each encoder, read the current state and store it in the
+  // `now_read_encoder` array. Also, store the current state in the
+  // `last_read_encoder` array for comparison later.
 
   for (int i = 0; i < 24; i++) {
     if (i < 8) {
@@ -138,13 +139,13 @@ void TurnOffOnePCFOutput(int PCF_output) {
 }
 
 int MinillitersToPulses(int ml, float k1, float k2) {
-  //not used
+  // not used
   int pulses = 0;
   pulses = k1 * ml + k2;
   return pulses;
 }
 
-void PriorityOrder(int pump1, int ml1, int priority1, bool rotation1, float ka1,
+bool PriorityOrder(int pump1, int ml1, int priority1, bool rotation1, float ka1,
                    float kb1, int pump2, int ml2, int priority2, bool rotation2,
                    float ka2, float kb2, int pump3, int ml3, int priority3,
                    bool rotation3, float ka3, float kb3, int pump4, int ml4,
@@ -246,7 +247,15 @@ void PriorityOrder(int pump1, int ml1, int priority1, bool rotation1, float ka1,
 
   InitialEncodersRead();
 
+  unsigned long current_time = millis();
+  const int timeout = 3000;
+
   while (process_finished == false) {
+
+    if (millis() >= current_time + timeout) {
+      Serial.println("pump dispensation timeout");
+      return true;
+    }
 
     // static unsigned long current_time22 = 0;
     // if(millis() >= current_time22 + 300){
@@ -293,7 +302,6 @@ void PriorityOrder(int pump1, int ml1, int priority1, bool rotation1, float ka1,
     }
     // Update the encoders.
     UpdateEncoders();
-
 
     // for (int i = 0; i < 8; i++) {
     //   Serial.println(encoder_counter[i]);
@@ -407,6 +415,7 @@ void PriorityOrder(int pump1, int ml1, int priority1, bool rotation1, float ka1,
   }
   digitalWrite(ENABLE_PUMPS, LOW);
   AllPCFLow();
+  return false;
 }
 
 void SinglePumpActivation(int pump) {
@@ -434,7 +443,42 @@ void AlarmActivation(int alarm) {
       delay(delay_time_2);
     }
   }
+
   auxiliarOutputs.set(alarm, LOW);
+}
+
+void DispensationAlarm(int alarm, bool reset) {
+  int delay_time_1 = 50;
+  int delay_time_2 = 700;
+  // digitalWrite(ENABLE_PUMPS, HIGH);
+  // delay(1000);
+  static unsigned long current_time = millis();
+  static bool state_alarm = true;
+
+  if (reset) {
+    digitalWrite(ENABLE_PUMPS, HIGH);
+    delay(1000);
+    state_alarm = true;
+    current_time = millis();
+  }
+
+  else {
+    if (state_alarm) {
+      auxiliarOutputs.set(alarm, HIGH);
+      if (millis() >= current_time + delay_time_1) {
+        state_alarm = false;
+        current_time = millis();
+      }
+
+      if (!state_alarm) {
+        auxiliarOutputs.set(alarm, LOW);
+        if (millis() >= current_time + delay_time_2) {
+          state_alarm = true;
+          current_time = millis();
+        }
+      }
+    }
+  }
 }
 
 void AlarmDeactivation(int alarm) {
