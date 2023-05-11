@@ -17,11 +17,14 @@ print("[!] Follow the instructions")
 print("[!] The data will be save in the same folder of this script\n")
 
 def read_pulse_sequence():
+    #This function reads a pulse sequence from a CSV file.
     pulses_sequence = []
 
     try:
+        # Load the pulse sequence from a CSV file.
         pulses = np.loadtxt('define_pulses.csv', dtype=np.int32, delimiter = ',', skiprows = 0)
         print("[!] Pulse sequence:", pulses)
+        # Convert the pulse sequence to a list.
         pulses = pulses.tolist()
         len(pulses)
         # print(len(pulses))
@@ -47,10 +50,18 @@ def read_pulse_sequence():
 
 
 def InputData():
+#     """This function inputs data for the calibration process.
+#   Args:
+#     none.
+#   Returns:
+#     A tuple of (file_names, pumps_slots, path_name).
+#   """
+    # Initialize variables.
     pumps_slots = []
     file_names = []
     home_path = Path.cwd()
 
+    # Get the number of pumps to calibrate.
     while True:
         try:
             pumps_to_calibrate = int(input("[?] Provide the number of pumps to calibrate  "))
@@ -63,6 +74,7 @@ def InputData():
             print("[!] Invalid input, try again.")
             continue
 
+     # Get the path name for the characterization.        
     while True:
             try:
                 path_name = (str(input("\n[?] Provide the Path name for this caracterization  ")))
@@ -80,7 +92,7 @@ def InputData():
                 print("[!] Invalid input, try again.")
                 continue
 
-
+    # Get the filename for each pump.
     for i in range(pumps_to_calibrate):
 
         while True:
@@ -94,7 +106,7 @@ def InputData():
             except ValueError:
                 print("[!] Invalid input, try again.")
                 continue
-
+        # Get the slot machine for each pump.       
         while True:
             try:
                 slot = (int(input("[?] Provide the slot machine for the pump [{}]  ".format(i+1))))
@@ -113,40 +125,62 @@ def InputData():
     return file_names, pumps_slots, path_name
 
 def BrodcastUDP():
+    # Create a UDP socket.
     broadcast_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Set the socket to broadcast mode.
     broadcast_socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+    # Set the broadcast address.
     broadcast_address = ('<broadcast>', 8000)
     print("[!]Connecting...")
     print('[!]Join to "Pump Caracterization" in the Calibrator')
 
     data = ''
     while(data != 'hi sup'):
-
+        # Create a message to send.
         message = "hi there"
+        # Send the message to the broadcast address.
         broadcast_socket.sendto(message.encode(), broadcast_address)
 
         # print(f"Mensaje enviado por broadcast a {broadcast_address}")
+        # Set a timeout of 1 second.
         broadcast_socket.settimeout(1.0)
 
+        # Try to receive a response from the Calibrator.
         try:
             data, server = broadcast_socket.recvfrom(4096)
             # print(f'Respuesta recibida de {server}: {data}')
+            # Decode the response.
             data = data.decode('utf-8')
             # print(data)
 
+            # If the response is "hi sup", break out of the loop.
             if data == 'hi sup':
                 break
         except socket.timeout:
             pass
+    # Close the socket.
     broadcast_socket.close()
     print('[!]Conected')
     print('________________________________________________________________')
 
 def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
+    """This function characterizes a set of pumps.
+
+  Args:
+    pulse_sequence: A list of the number of pulses for each pump.
+    filenames: A list of the filenames for each pump.
+    pumps_slots: A list of the pump slots for each pump.
+    path_name: The path to the directory where the output files will be saved.
+
+  Returns:
+    None.
+  """
+    
     host_name = socket.gethostname()
     ip_address = socket.gethostbyname(host_name)
     connections_number = 50
 
+    # Create a socket for the server.
     server_address = (ip_address, 8000)
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.bind(server_address)
@@ -329,7 +363,7 @@ def Caracterization(pulse_sequence, filenames, pumps_slots, path_name):
 
             file.close()
                     
-
+    #finish step of the pump
     incoming_data = {'stepFinished': False}
     step_finished = incoming_data['stepFinished']
     pump_data ={"processFinished": True}
