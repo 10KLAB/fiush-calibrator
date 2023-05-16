@@ -172,8 +172,8 @@ if(previous_weigth <= 0){
       treshold_possitive = pulses_diff * (1 + input_threshold);
       treshold_negative = pulses_diff * (1 - input_threshold);
 
-      Serial.println("Weigth = " + String(weigth) +  " Input TH= " + String(input_threshold) + " Treshhold = " + String(treshold_possitive) + " diff= " + String(weight_diff));
-
+      // Serial.println("Weigth = " + String(weigth) +  " Input TH= " + String(input_threshold) + " Treshhold = " + String(treshold_possitive) + " diff= " + String(weight_diff));
+      Serial.println("Weigth = " + String(weigth) + " Treshhold(+) = " + String(treshold_possitive) + " Treshhold(-) = " + String(treshold_negative)+ " diff= " + String(weight_diff));
     for (int i = 0; i < samples; i++) {
       previous_measure[i] = GetUnits(average_samples);
       delay(delay_time);
@@ -181,10 +181,17 @@ if(previous_weigth <= 0){
 
       if((previous_measure[i]/previous_weigth) > treshold_possitive || (previous_measure[i]/previous_weigth) < treshold_negative){
         end_flag = false;
-        if(weight_diff > treshold_possitive || weight_diff < treshold_negative){
-          Serial.println("out of range");
+        if(weight_diff > treshold_possitive){
+          Serial.println("out of range positive");
+          Serial.println("Weigth = " + String(weigth) + " Treshhold(+) = " + String(treshold_possitive) + " Treshhold(-) = " + String(treshold_negative)+ " diff= " + String(weight_diff));
           return -1;
         }
+        if(weight_diff < treshold_negative){
+          Serial.println("out of range negative");
+          Serial.println("Weigth = " + String(weigth) + " Treshhold(+) = " + String(treshold_possitive) + " Treshhold(-) = " + String(treshold_negative)+ " diff= " + String(weight_diff));
+          return -1;
+        }
+
         if(millis() > previous_time + timeout){
           Serial.println("timeout");
           return -1;

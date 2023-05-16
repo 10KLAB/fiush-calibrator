@@ -38,7 +38,6 @@ void setup() {
 
   _10klab::screen::PrintScreen(0, 0, "Fiush", true);
   _10klab::screen::PrintScreen(0, 1, "Calibrator" + version, false);
-  delay(1000);
   _10klab::screen::PrintScreen(0, 0, "Wifi setup", true);
   // DispensationTimeout();
   delay(2000);
@@ -347,57 +346,57 @@ float SelectThreshold() {
 
       case 1:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
-        _10klab::screen::PrintScreen(0, 1, "20%", false);
-        threshold = 0.2;
+        _10klab::screen::PrintScreen(0, 1, "12%", false);
+        threshold = 0.12;
         UpdateButtonsState();
         break;
 
       case 2:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
-        _10klab::screen::PrintScreen(0, 1, "30%", false);
-        threshold = 0.3;
+        _10klab::screen::PrintScreen(0, 1, "14%", false);
+        threshold = 0.14;
         UpdateButtonsState();
         break;
 
       case 3:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
-        _10klab::screen::PrintScreen(0, 1, "40%", false);
-        threshold = 0.4;
+        _10klab::screen::PrintScreen(0, 1, "16%", false);
+        threshold = 0.16;
         UpdateButtonsState();
         break;
 
       case 4:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
-        _10klab::screen::PrintScreen(0, 1, "50%", false);
-        threshold = 0.5;
+        _10klab::screen::PrintScreen(0, 1, "18%", false);
+        threshold = 0.18;
         UpdateButtonsState();
         break;
 
       case 5:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
-        _10klab::screen::PrintScreen(0, 1, "60%", false);
-        threshold = 0.6;
+        _10klab::screen::PrintScreen(0, 1, "20%", false);
+        threshold = 0.2;
         UpdateButtonsState();
         break;
 
       case 6:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
-        _10klab::screen::PrintScreen(0, 1, "70%", false);
-        threshold = 0.7;
+        _10klab::screen::PrintScreen(0, 1, "22%", false);
+        threshold = 0.22;
         UpdateButtonsState();
         break;
 
       case 7:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
-        _10klab::screen::PrintScreen(0, 1, "80%", false);
-        threshold = 0.8;
+        _10klab::screen::PrintScreen(0, 1, "24%", false);
+        threshold = 0.24;
         UpdateButtonsState();
         break;
 
       case 8:
         _10klab::screen::PrintScreen(0, 0, "Threshold", true);
-        _10klab::screen::PrintScreen(0, 1, "90%", false);
-        threshold = 0.9;
+        _10klab::screen::PrintScreen(0, 1, "26%", false);
+        threshold = 0.26;
         UpdateButtonsState();
         break;
       }
@@ -531,11 +530,19 @@ void PumpsCaracterizationMode() {
         bool half_prime = false;
         _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
         unsigned long current_time_prime = millis();
-        const int timeout_prime = 63000;
+        const int timeout_prime = 90000;
         while (prime_measure < prime_amount) {
           if(millis() >= current_time_prime + timeout_prime) {
             _10klab::pumps::SinglePumpDeactivation(IncomingParameters.pumpId);
             DispensationTimeout("Check pump: "+String(IncomingParameters.pumpId+1), "connection");
+            while(prime_measure > max_recipient_capacity*5){
+              prime_measure = _10klab::scale::GetUnits(10);
+              _10klab::pumps::SinglePumpActivation(unloading_pump_id);
+            }
+            _10klab::pumps::SinglePumpDeactivation(unloading_pump_id);
+            _10klab::pumps::SinglePumpActivation(IncomingParameters.pumpId);
+
+            current_time_prime = millis();
           }
           prime_measure = _10klab::scale::GetUnits(10);
           Serial.println("on prime");
