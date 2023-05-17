@@ -39,6 +39,7 @@ void setup() {
 
   _10klab::screen::PrintScreen(0, 0, "Fiush", true);
   _10klab::screen::PrintScreen(0, 1, "Calibrator" + version, false);
+  delay(2000);
   _10klab::screen::PrintScreen(0, 0, "Wifi setup", true);
   // DispensationTimeout();
   delay(2000);
@@ -68,7 +69,7 @@ void SelectionMenu() {
   //   * Calibration mode
   //   * Clear WiFi credentials
 
-  int page = 0;
+  int page = 3;
   static bool selected = false;
   static bool skip_one_screen = true;
   static bool start_image = true;
