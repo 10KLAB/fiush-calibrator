@@ -27,6 +27,7 @@ void SelectionMenu();
 void DispensationTimeout(String message_top, String message_bottom);
 
 void setup() {
+  // delay(1000);
   Serial.begin(115200);
   _10klab::scale::SetUpScale();
   delay(100);
@@ -47,6 +48,7 @@ void setup() {
   delay(1000);
 
   Serial.println("started");
+  Serial.println(250/200);
 
   SelectionMenu();
   // PumpsCaracterizationMode();
@@ -620,7 +622,7 @@ void PumpsCaracterizationMode() {
           }
         }
 
-        _10klab::tcp_client::SendAnswer(server_ip, false, 0);
+        // _10klab::tcp_client::SendAnswer(server_ip, false, 0);
         pump_dispensation_alert = _10klab::pumps::PriorityOrder(
             IncomingParameters.pumpId, IncomingParameters.pulses,
             IncomingParameters.priority, IncomingParameters.rotation,
@@ -637,8 +639,11 @@ void PumpsCaracterizationMode() {
 
         }
         else{
-          measure = _10klab::scale::StableMeasure2(IncomingParameters.pulses,
-                                                 threshold);
+          bool new_pump = false;
+          if(IncomingParameters.prime_pump){
+            new_pump = true;
+          }
+          measure = _10klab::scale::StableMeasure2(IncomingParameters.pulses, threshold, new_pump);
         }
         // delay(5000);
         // measure = _10klab::scale::StableMeasure(true);
@@ -657,6 +662,7 @@ void PumpsCaracterizationMode() {
         if (measure != -1) {
           verification = true;
           // Send a message to the server with the measure
+          Serial.println("data to send = " + String(measure));
           _10klab::tcp_client::SendAnswer(server_ip, true, measure);
         }
 

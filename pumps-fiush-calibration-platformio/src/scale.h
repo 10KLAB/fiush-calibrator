@@ -10,7 +10,7 @@ namespace _10klab{
         float GetUnits(int samples);
         void UpdateCoefficients();
         float StableMeasure(bool enable_negatives);
-        float StableMeasure2(int pulses, float input_threshold);
+        float StableMeasure2(int pulses, float input_threshold, bool new_pump);
         float CalibratorMeasure(bool enable_tare);
 
     }

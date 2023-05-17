@@ -73,7 +73,7 @@ float StableMeasure(bool enable_negatives) {
   float prev_weight = 0;
   float weight = GetUnits(10);
   unsigned int previous_time = millis();
-  const int timeout = 5000;
+  const int timeout = 2500;
 
 
     while ((weight - prev_weight) > 0.5 || weight < -0.5) {
@@ -126,39 +126,33 @@ float CalibratorMeasure(bool enable_tare) {
 }
 
 
-float StableMeasure2(int pulses, float input_threshold) {
-  const int delay_time = 300;
-  const int samples = 2;
+float StableMeasure2(int pulses, float input_threshold, bool new_pump) {
+  const int delay_time = 600;
+  const int samples = 1;
   const int average_samples = 5;
   float treshold_possitive = 1;
   float treshold_negative = -1;
 
-  float previous_measure[samples] = {0};
-  float weigth = GetUnits(average_samples);
+  static float weigth = 1;
+
   static float previous_weigth = 1;
-  static int previous_pulses = 1;
+  static float previous_pulses = 1;
+
+if(previous_weigth <= 0){
+  previous_weigth = 1;
+}
 
   unsigned int previous_time = millis();
   const int timeout = 7000;
-
-  // float previous_weight_treshold = previous_weigth + 50;
-    // float previous_weight_treshold = previous_weigth * 50;
   bool end_flag = false;
 
-
-if(previous_weigth <= 0){
-  previous_weigth = weigth;
-}
-// Serial.println("previous_weigth = " + String(previous_weigth) + " weigth = " + String(weigth) + " diff = " + String(weigth-previous_weigth));
-
-// Serial.println("treshold = " + String(previous_weigth + previous_weight_treshold));
-
   while (!end_flag) {
+    delay(delay_time);
 
     weigth = GetUnits(average_samples);
-    end_flag = true;
+    // end_flag = true;
 
-    if(weigth < 10){
+    if(weigth < 20){
       if(input_threshold < 2){
         input_threshold = 2;
       }
@@ -167,20 +161,34 @@ if(previous_weigth <= 0){
       previous_pulses = 1;
     }
 
+
+
       float weight_diff = weigth/previous_weigth;
-      int pulses_diff = pulses / previous_pulses;
+      float input_pulses = pulses + 0.1;
+      float pulses_diff = 100;
+      pulses_diff = input_pulses/previous_pulses;
+    Serial.println("//////////////////////////////////////////////////////");
+    Serial.println("P_W = " +String(previous_weigth) + " W = " + String(weigth) + " P_P = " + String(previous_pulses) + " P = " + String(pulses));
+    Serial.println("W_D= " + String(weight_diff) + " P_D = " + String(pulses_diff));
+    Serial.println("//////////////////////////////////////////////////////");
+      
       treshold_possitive = pulses_diff * (1 + input_threshold);
       treshold_negative = pulses_diff * (1 - input_threshold);
 
+
+      
+      if(new_pump){
+        treshold_possitive = 999;
+        treshold_negative = -999;
+      }
+
       // Serial.println("Weigth = " + String(weigth) +  " Input TH= " + String(input_threshold) + " Treshhold = " + String(treshold_possitive) + " diff= " + String(weight_diff));
       Serial.println("Weigth = " + String(weigth) + " Treshhold(+) = " + String(treshold_possitive) + " Treshhold(-) = " + String(treshold_negative)+ " diff= " + String(weight_diff));
-    for (int i = 0; i < samples; i++) {
-      previous_measure[i] = GetUnits(average_samples);
-      delay(delay_time);
 
+      // weigth = GetUnits(average_samples);
+      // delay(delay_time);
 
-      if((previous_measure[i]/previous_weigth) > treshold_possitive || (previous_measure[i]/previous_weigth) < treshold_negative){
-        end_flag = false;
+        // end_flag = false;
         if(weight_diff > treshold_possitive){
           Serial.println("out of range positive");
           Serial.println("Weigth = " + String(weigth) + " Treshhold(+) = " + String(treshold_possitive) + " Treshhold(-) = " + String(treshold_negative)+ " diff= " + String(weight_diff));
@@ -196,18 +204,21 @@ if(previous_weigth <= 0){
           Serial.println("timeout");
           return -1;
         }
-      }
-
-    }
-    delay(delay_time);
-    if(end_flag){
-      delay(1000);
+      
+    if(!end_flag){
+      delay(delay_time);
       float verify_weigth = GetUnits(average_samples);
       if ((verify_weigth - weigth) > 0.5 || (verify_weigth - weigth) < -0.5){
         end_flag = false;
       }
+      else{
+        end_flag = true;
+        Serial.println("verificated");
+
+      }
     }
   }
+
   previous_weigth = weigth;
   previous_pulses = pulses;
   return weigth;
@@ -217,3 +228,108 @@ if(previous_weigth <= 0){
 } // namespace _10klab
 
 
+
+
+
+
+
+
+
+
+
+// float StableMeasure2(int pulses, float input_threshold) {
+//   const int delay_time = 300;
+//   const int samples = 1;
+//   const int average_samples = 5;
+//   float treshold_possitive = 1;
+//   float treshold_negative = -1;
+
+//   float previous_measure[samples] = {0};
+//   float weigth = GetUnits(average_samples);
+//   static float previous_weigth = 1;
+//   static int previous_pulses = 1;
+
+//   unsigned int previous_time = millis();
+//   const int timeout = 7000;
+
+//   // float previous_weight_treshold = previous_weigth + 50;
+//     // float previous_weight_treshold = previous_weigth * 50;
+//   bool end_flag = false;
+  
+
+
+// if(previous_weigth <= 0){
+//   previous_weigth = weigth;
+// }
+// // Serial.println("previous_weigth = " + String(previous_weigth) + " weigth = " + String(weigth) + " diff = " + String(weigth-previous_weigth));
+
+// // Serial.println("treshold = " + String(previous_weigth + previous_weight_treshold));
+
+//   while (!end_flag) {
+
+//     weigth = GetUnits(average_samples);
+//     end_flag = true;
+
+//     if(weigth < 15){
+//       if(input_threshold < 2){
+//         input_threshold = 2;
+//       }
+//     }
+//     if(previous_pulses > pulses){
+//       previous_pulses = 1;
+//     }
+
+//       float weight_diff = weigth/previous_weigth;
+//       float pulses_diff = pulses / previous_pulses;
+      
+//       treshold_possitive = pulses_diff * (1 + input_threshold);
+//       treshold_negative = pulses_diff * (1 - input_threshold);
+
+//       static bool start_treshold = true;
+//       if(start_treshold){
+//         treshold_possitive = 999;
+//         treshold_negative = -999;
+//         start_treshold = false;
+//       }
+
+//       // Serial.println("Weigth = " + String(weigth) +  " Input TH= " + String(input_threshold) + " Treshhold = " + String(treshold_possitive) + " diff= " + String(weight_diff));
+//       Serial.println("Weigth = " + String(weigth) + " Treshhold(+) = " + String(treshold_possitive) + " Treshhold(-) = " + String(treshold_negative)+ " diff= " + String(weight_diff));
+//     for (int i = 0; i < samples; i++) {
+//       previous_measure[i] = GetUnits(average_samples);
+//       delay(delay_time);
+
+
+//       if((previous_measure[i]/previous_weigth) > treshold_possitive || (previous_measure[i]/previous_weigth) < treshold_negative){
+//         end_flag = false;
+//         if(weight_diff > treshold_possitive){
+//           Serial.println("out of range positive");
+//           Serial.println("Weigth = " + String(weigth) + " Treshhold(+) = " + String(treshold_possitive) + " Treshhold(-) = " + String(treshold_negative)+ " diff= " + String(weight_diff));
+//           return -1;
+//         }
+//         if(weight_diff < treshold_negative){
+//           Serial.println("out of range negative");
+//           Serial.println("Weigth = " + String(weigth) + " Treshhold(+) = " + String(treshold_possitive) + " Treshhold(-) = " + String(treshold_negative)+ " diff= " + String(weight_diff));
+//           return -1;
+//         }
+
+//         if(millis() > previous_time + timeout){
+//           Serial.println("timeout");
+//           return -1;
+//         }
+//       }
+
+//     }
+//     delay(delay_time);
+//     if(end_flag){
+//       delay(1000);
+//       float verify_weigth = GetUnits(average_samples);
+//       if ((verify_weigth - weigth) > 0.5 || (verify_weigth - weigth) < -0.5){
+//         end_flag = false;
+//       }
+//     }
+//   }
+
+//   previous_weigth = weigth;
+//   previous_pulses = pulses;
+//   return weigth;
+// }
